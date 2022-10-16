@@ -11,7 +11,7 @@
     - [Wrapping errors with %w](#Wrapping-errors-with-w)
     - [Whether to Wrap](#Whether-to-Wrap)
     - [Examining errors with Is and As](#Examining-errors-with-Is-and-As)
-    - [推荐用 errors.Is 来比较错误  ](#%E6%8E%A8%E8%8D%90%E7%94%A8-errorsIs-%E6%9D%A5%E6%AF%94%E8%BE%83%E9%94%99%E8%AF%AF--)
+    - [推荐用 errors.Is 来比较错误](#%E6%8E%A8%E8%8D%90%E7%94%A8-errorsIs-%E6%9D%A5%E6%AF%94%E8%BE%83%E9%94%99%E8%AF%AF)
   - [处理 Panic](#%E5%A4%84%E7%90%86-Panic)
     - [什么时候适合 panic](#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E9%80%82%E5%90%88-panic)
     - [实现 Panic Recovery](#%E5%AE%9E%E7%8E%B0-Panic-Recovery)
@@ -149,7 +149,7 @@ if errors.Is(err, ResourceErr{Resource: "Database"}) {
 // errors.Is 如何判定两个对象的相等性?  先尝试 == 后尝试 Is,  其中一个是 true 则返回 true
 ```
 
-### 推荐用 errors.Is 来比较错误  
+### 推荐用 errors.Is 来比较错误
 
 ```go
 errors.Is(err, sql.ErrNoRows)   // good
