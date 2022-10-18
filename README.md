@@ -5,3 +5,4 @@
 - [go 3 错误处理](golang/go%203%20%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86.md#table-of-contents)
 - [go 4 包和模块](golang/go%204%20%E5%8C%85%E5%92%8C%E6%A8%A1%E5%9D%97.md#table-of-contents)
 - [go 5 标准库](golang/go%205%20%E6%A0%87%E5%87%86%E5%BA%93.md#table-of-contents)
+- [go 6 测试](golang/go%206%20%E6%B5%8B%E8%AF%95.md#table-of-contents)
