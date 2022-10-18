@@ -223,11 +223,11 @@ Every language ships with a standard library, but the expectations of what a sta
 
 (1) The net/http package defines a Client type to make HTTP requests and receive HTTP responses. A default client instance (cleverly named DefaultClient) is found in the net/http package, but you should avoid using it in production applications, because it defaults to having no timeout. Instead, instantiate your own. You only need to create a single http.Client for your entire program, as it properly handles multiple simultaneous requests across goroutines:  `client := &http.Client{Timeout: 30 * time.Second}`
 
-(2) When you want to make a request, you create a new *http.Request instance with the http.NewRequestWithContext function, passing it a context, the method, and URL that you are connecting to. If you are making a PUT, POST, or PATCH request, specify the body of the request with the last parameter as an io.Reader. If there is no body, use nil.
+(2) When you want to make a request, you create a new `*http.Request` instance with the `http.NewRequestWithContext` function, passing it a context, the method, and URL that you are connecting to. If you are making a PUT, POST, or PATCH request, specify the body of the request with the last parameter as an `io.Reader`. If there is no body, use `nil`.
 
-(3) Once you have an *http.Request instance, you can set any headers via the Headers field of the instance. Call the Do method on the http.Client with your http.Request and the result is returned in an http.Response.
+(3) Once you have an `*http.Request` instance, you can set any headers via the `Headers` field of the instance. Call the `Do` method on the `http.Client` with your http.Request and the result is returned in an http.Response.
 
-(4) The response has several fields with information on the request. The numeric code of the response status is in the StatusCode field, the text of the response code is in the Status field, the response headers are in the Header field, and any returned content is in a Body field of type io.ReadCloser. This allows us to use it with json.Decoder to process REST API responses.
+(4) The response has several fields with information on the request. The numeric code of the response status is in the `StatusCode` field, the text of the response code is in the `Status` field, the response headers are in the `Header` field, and any returned content is in a `Body` field of type `io.ReadCloser`. This allows us to use it with `json.Decoder` to process REST API responses.
 
 ![image-20220702214421424](https://static.xianyukang.com/img/image-20220702214421424.png) 
 
