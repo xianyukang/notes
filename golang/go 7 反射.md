@@ -155,7 +155,7 @@ Another thing that Go lets you do with reflection is create a function. We can u
 
 ![image-20220730154506030](https://static.xianyukang.com/img/image-20220730154506030.png) 
 
-![image-20220730155952526](D:\notes\.img\go 7 反射\image-20220730155952526.png) 
+![image-20220730155952526](https://static.xianyukang.com/img/image-20220730155952526.png) 
 
 While generating functions is clever, be careful when using this feature. you will be *making it harder to understand* the flow of data through your program. Furthermore, as we’ll discuss in “Only Use Reflection If It’s Worthwhile” on page 314, reflection *makes your programs slower*, so using it to generate and invoke functions seriously impacts performance unless the code you are generating is already performing a slow operation, like a network call.   
 
