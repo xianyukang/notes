@@ -7,3 +7,4 @@
 - [go 5 标准库](golang/go%205%20%E6%A0%87%E5%87%86%E5%BA%93.md#table-of-contents)
 - [go 6 测试](golang/go%206%20%E6%B5%8B%E8%AF%95.md#table-of-contents)
 - [go 7 反射](golang/go%207%20%E5%8F%8D%E5%B0%84.md#table-of-contents)
+- [go 8 泛型](golang/go%208%20%E6%B3%9B%E5%9E%8B.md#table-of-contents)
