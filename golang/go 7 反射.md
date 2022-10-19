@@ -237,13 +237,14 @@ The second reason that people use unsafe is for performance, especially when rea
 
 ![image-20220731033912127](https://static.xianyukang.com/img/image-20220731033912127.png) 
 
-简而言之把一串字节重新解释为 Data,  能省掉几行代码、几次复制,  所以代码更快了.  
-这里为什么有端序转换呢?
+简而言之把一串字节重新解释为 Data,  能省掉几行代码、几次复制,  所以代码更快了.
 
-1. 二进制协议中也有 int 类型
-2. 一些机器是大端序、一些机器是小端序(占大部分)
+➤ 这里为什么涉及端序转换呢?
+
+1. 假设通过网络发送一个 int 数据
+2. 一些机器用大端序存储 int、另一些 (大部分) 机器用小端序存储 int
 3. 所以通过网络发送 int 时不能直接把内存中的 int 发出去,  得定一个标准
-4. 标准就是大端序,  通过网络发送 int 时转成大端序,  接收 int 时再转回小端序
+4. 标准就是大端序,  发送端发送 int 时转成大端序,  接收端接收 int 时再转回小端序
 
 ### runtime.KeepAlive()
 
