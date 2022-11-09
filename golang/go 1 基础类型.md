@@ -13,6 +13,7 @@
     - [空切片和 nil 切片](#%E7%A9%BA%E5%88%87%E7%89%87%E5%92%8C-nil-%E5%88%87%E7%89%87)
     - [子切片和源切片共享同一底层数组](#%E5%AD%90%E5%88%87%E7%89%87%E5%92%8C%E6%BA%90%E5%88%87%E7%89%87%E5%85%B1%E4%BA%AB%E5%90%8C%E4%B8%80%E5%BA%95%E5%B1%82%E6%95%B0%E7%BB%84)
     - [小心对子切片调用 append](#%E5%B0%8F%E5%BF%83%E5%AF%B9%E5%AD%90%E5%88%87%E7%89%87%E8%B0%83%E7%94%A8-append)
+    - [指向切片的指针有什么用?](#%E6%8C%87%E5%90%91%E5%88%87%E7%89%87%E7%9A%84%E6%8C%87%E9%92%88%E6%9C%89%E4%BB%80%E4%B9%88%E7%94%A8)
     - [copy 函数](#copy-%E5%87%BD%E6%95%B0)
   - [字符串](#%E5%AD%97%E7%AC%A6%E4%B8%B2)
     - [字符串如何工作](#%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C)
@@ -174,6 +175,13 @@ The full slice expression includes a third part, which indicates the last positi
 
 比如 `y := x[0:2:2]` 中第三部分的 2 表示,  y 与源切片共享 [0, 2) 这块内存  
 比如 `z := x[2:4:4]` 中第三部分的 4 表示,  z 与源切片共享 [2, 4) 这块内存
+
+### 指向切片的指针有什么用?
+
+[Why pointers to slices are useful and how ignoring them can lead to tricky bugs](https://link.medium.com/tOemYJhIAub).  
+如果只需修改切片中的元素,  那么函数参数用 `[]string` 类型  
+如果需要增/删切片元素,  那么函数参数用 `*[]string` 类型,  否则外面会看不到修改,  
+因为切片变量的实质是一个 `reflect.SliceHeader`,  切片按值传递也是传一个结构体
 
 ### copy 函数
 

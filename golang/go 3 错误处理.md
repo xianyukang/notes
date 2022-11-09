@@ -11,7 +11,7 @@
     - [Wrapping errors with %w](#Wrapping-errors-with-w)
     - [Whether to Wrap](#Whether-to-Wrap)
     - [Examining errors with Is and As](#Examining-errors-with-Is-and-As)
-    - [推荐用 errors.Is 来比较错误](#%E6%8E%A8%E8%8D%90%E7%94%A8-errorsIs-%E6%9D%A5%E6%AF%94%E8%BE%83%E9%94%99%E8%AF%AF)
+    - [注意 errors.Is 和 errors.As](#%E6%B3%A8%E6%84%8F-errorsIs-%E5%92%8C-errorsAs)
   - [处理 Panic](#%E5%A4%84%E7%90%86-Panic)
     - [什么时候适合 panic](#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E9%80%82%E5%90%88-panic)
     - [实现 Panic Recovery](#%E5%AE%9E%E7%8E%B0-Panic-Recovery)
@@ -46,7 +46,7 @@ Sentinel errors are one of the few variables that are declared at the package le
 
 ### 自定义错误类型
 
-Since error is an interface, you can define your own errors that include additional information for logging or error handling. For example, you might want to include a status code as part of the error to indicate the kind of error that should be reported back to the user. This lets you avoid string comparisons (whose text might change) to determine error causes.  
+Since error is an interface, you can define your own errors that include additional information for logging or error handling. For example, you might want to include a status code as part of the error to indicate the kind of error that should be reported back to the user. This lets you avoid string comparisons (whose text might change) to determine error causes.
 
 ![image-20220515113743677](https://static.xianyukang.com/img/image-20220515113743677.png) 
 
@@ -75,20 +75,28 @@ There are two ways to fix this. The most common approach is to explicitly return
 
 ## Wrapping Errors
 
+[➤ 参考文档](https://go.dev/blog/go1.13-errors)
+
 ### Why Wrapping Errors
 
 We may sometimes want to define a new error type that contains the underlying error, adding information to it, preserving it for inspection by code. 
 
 ```go
-// 定义一个 QueryError 类型,  保留底层 error 的同时添加了额外的 query 信息
+// 如何 Wrap 错误并添加额外信息:
+// (1) 定义一个 QueryError 类型,  保留底层 error 的同时添加了额外的 query 信息
 type QueryError struct {
     Query string
     Err   error
 }
+// (2) 定义 Unrap 和 Error 方法
+func (e *QueryError) Unwrap() error { return e.Err }
+
+func (e *QueryError) Error() string { return e.Query + ": " + e.Err.Error() }
+
 // 如果是错误 QueryError 类型并且底层错误是 ErrPermission,  针对这种情况做特殊处理
 if e, ok := err.(*QueryError); ok && e.Err == ErrPermission {
     
-}  
+}
 ```
 
 When you preserve an error while adding additional information, it is called wrapping the error. When you have a series of wrapped errors, it is called an error chain.
@@ -149,18 +157,22 @@ if errors.Is(err, ResourceErr{Resource: "Database"}) {
 // errors.Is 如何判定两个对象的相等性?  先尝试 == 后尝试 Is,  其中一个是 true 则返回 true
 ```
 
-### 推荐用 errors.Is 来比较错误
+### 注意 errors.Is 和 errors.As
+
+➤ 用 Is 检查错误链
 
 ```go
 errors.Is(err, sql.ErrNoRows)   // good
 err == sql.ErrNoRows            // bad, 因为如果哪天 wrap 了错误, 这行代码就会失效
 ```
 
-另外可以这样调用 As 方法:
+➤ 用 As 获取错误类型
 
 ```go
 var myErr MyErr
-if errors.As(err, &myErr) { // the second is a pointer to a variable of the type that you are looking for
+// Similar to:  if e, ok := err.(*QueryError); ok { … }
+// The second is a pointer to a variable of the type that you are looking for
+if errors.As(err, &myErr) {
 	fmt.Println(myErr.Code)
 }
 var coder interface {      // 除了用 MyErr 类型的变量,  也能用匿名接口

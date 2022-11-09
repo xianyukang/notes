@@ -51,7 +51,8 @@ Gin is a minimalistic web framework suitable for building web applications, micr
 ②用 c.FullPath() 获取路由定义, 比如  c.FullPath() == "/user/:name/*action"
 
 ➤ 精确匹配的优先级更高  
-`router.GET("/user/groups", ...)` will add a new router for /user/groups. *Exact routes are resolved before param routes, regardless of the order they were defined*.
+`router.GET("/user/groups", ...)` will add a new router for /user/groups.  
+*Exact routes are resolved before param routes, regardless of the order they were defined*.
 
 ➤ 路由分组
 
@@ -122,28 +123,9 @@ func 使用中间件() {
 
 [➤ 如何编写自定义中间件、以及 c.Set() 的作用](https://github.com/gin-gonic/gin#custom-middleware)
 
+[➤ 自定义 Panic Recovery 中间件](https://github.com/gin-gonic/gin#custom-recovery-behavior)
+
 ➤ 注意在 Middleware/Handler 中启动新的 Goroutine 时,  必须 c.Copy() 复制一下 Context, [例子](https://github.com/gin-gonic/gin#goroutines-inside-a-middleware)
-
-➤ 自定义 Panic Recovery
-
-```go
-func 自定义错误恢复() {
-	r := gin.New()
-	r.Use(gin.Logger())
-	// Recovery middleware recovers from any panics and writes a 500 if there was one.
-	r.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
-		if err, ok := recovered.(string); ok {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("error: %s", err))
-		}
-		c.AbortWithStatus(http.StatusInternalServerError)
-	}))
-
-	r.GET("/panic", func(c *gin.Context) {
-		panic("foo") // panic with a string -- the custom middleware could report it to the user
-	})
-	r.Run(":8080")
-}
-```
 
 ➤ 日志相关
 
