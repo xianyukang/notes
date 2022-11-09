@@ -9,3 +9,4 @@
 - [go 7 反射](golang/go%207%20%E5%8F%8D%E5%B0%84.md#table-of-contents)
 - [go 8 泛型](golang/go%208%20%E6%B3%9B%E5%9E%8B.md#table-of-contents)
 - [go 相关库 gin](golang/go%20%E7%9B%B8%E5%85%B3%E5%BA%93%20gin.md#table-of-contents)
+- [go 相关库 gorm](golang/go%20%E7%9B%B8%E5%85%B3%E5%BA%93%20gorm.md#table-of-contents)

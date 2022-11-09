@@ -70,9 +70,8 @@ go get -u gorm.io/driver/mysql
 
 ➤ 初始化 ORM
 
-> **注意：**想要正确的处理 `time.Time` ，dsn 需要带上 `parseTime` 参数，要支持完整的 UTF-8 编码，您需要将 `charset=utf8` 更改为 `charset=utf8mb4`, 查看 [此文章](https://mathiasbynens.be/notes/mysql-utf8mb4) 获取详情. 另外还需要把 loc 参数从默认的 UTC 改成 Local,  这样 mysql driver 从查询结果生成 time.Time 结构时,  生成的 time.Time 结构的 Location 字段才是 Local. 
+> 注意: 想要正确的处理 `time.Time` ，dsn 需要带上 `parseTime=True` 参数，要支持完整的 UTF-8 编码，需要加上 `charset=utf8mb4` 参数, 查看 [此文章](https://mathiasbynens.be/notes/mysql-utf8mb4) 理解 mysql 的字符串编码. 另外还需要添加 `loc=Local` ,  这样 mysql driver 从查询结果生成 time.Time 结构时,  生成的 time.Time 结构的 Location 字段才是 Local. [参数来源 mysql driver 文档](https://github.com/go-sql-driver/mysql#parameters)
 >
-> [更多参数去看 mysql driver 文档](https://github.com/go-sql-driver/mysql#parameters)
 
 ```go
 import gormMySql "gorm.io/driver/mysql"
@@ -108,6 +107,7 @@ type Product struct {
   db.First(&product, "code = ?", "D42")  // find product with code D42
 
   // Update
+  // db.Model(&product) 表示用 product.ID 作为筛选条件
   db.Model(&product).Update("Price", 200)
   db.Model(&product).Updates(Product{Price: 200, Code: "F42"})
   db.Model(&product).Updates(map[string]interface{}{"Price": 200, "Code": "F42"})
@@ -115,9 +115,6 @@ type Product struct {
   // Delete - delete product
   db.Delete(&product, 1)
 ```
-
-- `db.Model(&product).Update("Price", 200)` 更新哪一个产品? 会用 `product.ID` 作为筛选条件
-- 如何更新 price 为 100 的产品, 批量更新、和只更新首个? 
 
 ### 日志配置
 
@@ -132,12 +129,15 @@ type Product struct {
 
 [➤ 参考文档](https://gorm.io/zh_CN/docs/gorm_config.html)
 
-1. 自定义创建表时的命名策略,  比如表名用什么前缀 (默认无)、使用单数还是复数 (默认复数, 推荐改成单数)
+1. 修改创建表时的命名策略,  比如表名用什么前缀 (默认无)、使用单数还是复数 (默认复数, 推荐改成单数)
 
-2. 禁用外键约束,  [大家设计数据库时使用外键吗？](https://www.zhihu.com/question/19600081)
+2. 禁用创建表时自动添加外键约束,  [大家设计数据库时使用外键吗？](https://www.zhihu.com/question/19600081)
 
 在 `AutoMigrate` 或 `CreateTable` 时，GORM 会自动创建外键约束，可以禁用该特性.
 
+➤ 外键约束是什么?  
+
+>
 > 通过定义外键约束，关系数据库可以保证无法插入无效的数据。即如果 `classes` 表不存在 `id=99` 的记录，`students`表就无法插入`class_id=99`的记录。由于外键约束会降低数据库的性能，大部分互联网应用程序为了追求速度，并不设置外键约束，而是仅靠应用程序自身来保证逻辑的正确性。这种情况下，`class_id` 仅仅是一个普通的列，只是它起到了外键的作用而已。
 
 3. 题外话, 为什么常常看到 `varchar(191)`、`varchar(255)` ?
@@ -193,7 +193,7 @@ GORM prefers convention over configuration. By default, GORM uses `ID` as primar
 ```go
 type Character struct {
 	gorm.Model                          // 嵌入 ID、CreatedAt、UpdatedAt、DeletedAt 等三个字段
-    Age        uint8  `gorm:"not null"` // 如果用 int 对应到数据库则是 bigint,  有点浪费
+	Age        uint8  `gorm:"not null"` // 如果用 int 对应到数据库则是 bigint,  有点浪费
 	Name       string `gorm:"size:191"` // 注意设置 varchar(191),  否则默认是 longtext 类型
 	From       string `gorm:"size:191"`
 }
@@ -205,7 +205,7 @@ func 创建表() {
 	_ = db.Migrator().CreateTable(&Character{})
 	fmt.Println(db.Migrator().GetTables())
 
-	// 可以这样打印 GORM 生成的 SQL
+	// 一般只在开发环境使用 GORM 的建表功能,  可以这样打印 GORM 生成的 SQL
 	_ = db.Session(&gorm.Session{DryRun: true}).Debug().Migrator().CreateTable(&Character{})
 }
 
@@ -325,7 +325,7 @@ func 批量插入() {
 }
 ```
 
-➤ [模型中用 default 标签指定默认值](https://gorm.io/docs/create.html#Default-Values)
+➤ [在模型中用 default 标签指定默认值](https://gorm.io/docs/create.html#Default-Values)
 
 如果插入记录时 Age 字段是零值,  就会用 default 标签设置的默认值  
 注意如果数据库中为 age 设了默认值,  那么模型中的 Age 字段也要加上 default 标签,  否则很容易插入零值
@@ -779,7 +779,7 @@ func 重新建表() {
 
 func 关联创建() {
 	db.Create(&Company{Name: "妖精的尾巴", Employees: []Employee{ // (1) 插入妖精的尾巴,  得到公司 id
-		{Name: "纳兹"}, {Name: "露西"}, {Name: "艾露莎"}, // (2) 设置 CompanyID,  然后插入三个员工
+		{Name: "纳兹"}, {Name: "露西"}, {Name: "艾露莎"},         // (2) 设置 CompanyID,  然后插入三个员工
 	}})
 	db.Create(&Company{Name: "护庭十三番队", Employees: []Employee{
 		{Name: "一护"}, {Name: "露琪亚"},
@@ -898,13 +898,13 @@ func 自动创建数据和关联() {
 ```go
 func 查找关联数据() {
 	// Preload 使用多条 SQL 查询关联数据,  比如比下面的查询要用三条 SQL
-    // 查询名为克劳德的学生、用 Preload 预加载他学过的、并且 id < 100 的课程
+	// 查询名为克劳德的学生、用 Preload 预加载他学过的、并且 id < 100 的课程
 	var cloud Student
 	db.Preload("Courses", "id < ?", 100).Where("name = ?", "克劳德").Find(&cloud)
 	fmt.Println(cloud.Name, cloud.Courses)
     
-    // 假如课程 has one 老师,  预加载课程列表的同时预加载 Course 中的 Teacher 字段
-    db.Preload("Courses").Preload("Courses.Teacher").Where("name = ?", "克劳德").Find(&cloud)
+	// 假如课程 has one 老师,  预加载课程列表的同时预加载 Course 中的 Teacher 字段
+	db.Preload("Courses").Preload("Courses.Teacher").Where("name = ?", "克劳德").Find(&cloud)
 
 	// Joins 使用 employee LEFT JOIN company 加载关联数据
 	// Joins 只能用于 has one, belongs to 关系
@@ -926,7 +926,7 @@ func 查找关联数据() {
 
 1. `Append()` 为 many to many、has many 添加新的关联数据；为 has one, belongs to 替换当前的关联数据
 
-2. 参考这里的 [关联操作](https://gorm.io/zh_CN/docs/associations.html#%E6%9B%BF%E6%8D%A2%E5%85%B3%E8%81%94),  比如删除关联数据、替换关联数据、统计有多少个关联数据、....
+2. 参考这里的 [关联操作](https://gorm.io/zh_CN/docs/associations.html#%E6%9B%BF%E6%8D%A2%E5%85%B3%E8%81%94),  还可以删除关联数据、替换关联数据、统计有多少个关联数据、....
 
 ```go
 func 添加关联数据() {
