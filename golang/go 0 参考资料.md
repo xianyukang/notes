@@ -1,10 +1,9 @@
 ## Table of Contents
-  - [参考资料](#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99)
-    - [[Learning Go](https://www.amazon.com/Learning-Go-Idiomatic-Real-World-Programming/dp/1492077216/)](#Learning-GohttpswwwamazoncomLearningGoIdiomaticRealWorldProgrammingdp1492077216)
+  - [Learning Go](#Learning-Go)
 
-## 参考资料
 
-### [Learning Go](https://www.amazon.com/Learning-Go-Idiomatic-Real-World-Programming/dp/1492077216/)
+
+## [Learning Go](https://www.amazon.com/Learning-Go-Idiomatic-Real-World-Programming/dp/1492077216/)
 
 ➤ 这本书写的非常好,  适合有其他编程语言基础的人,  为什么好?
 
