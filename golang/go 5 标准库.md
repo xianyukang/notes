@@ -1,5 +1,8 @@
 ## Table of Contents
   - [从官方文档开始](#%E4%BB%8E%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3%E5%BC%80%E5%A7%8B)
+  - [fmt](#fmt)
+    - [方便的 %v](#%E6%96%B9%E4%BE%BF%E7%9A%84-v)
+    - [Stringer 接口](#Stringer-%E6%8E%A5%E5%8F%A3)
   - [io](#io)
     - [Reader/Writer 概述](#ReaderWriter-%E6%A6%82%E8%BF%B0)
     - [如何使用 Reader 接口](#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8-Reader-%E6%8E%A5%E5%8F%A3)
@@ -17,15 +20,54 @@
     - [JSON, Readers, and Writers](#JSON-Readers-and-Writers)
     - [Encoding and Decoding JSON Streams](#Encoding-and-Decoding-JSON-Streams)
     - [Custom JSON Parsing](#Custom-JSON-Parsing)
+    - [json.RawMessage 有什么用](#jsonRawMessage-%E6%9C%89%E4%BB%80%E4%B9%88%E7%94%A8)
   - [net/http](#nethttp)
     - [The Client](#The-Client)
     - [The Server](#The-Server)
   - [os](#os)
     - [os/exec](#osexec)
+  - [sort](#sort)
+    - [例子](#%E4%BE%8B%E5%AD%90)
 
 ## 从官方文档开始
 
 We can’t cover all of the standard library packages, and luckily, we don’t have to, as there are many excellent sources of information on the standard library, [starting with the documentation](https://pkg.go.dev/std). Instead, we’ll focus on several of the most important packages and how their design and use demonstrate the principles of idiomatic Go. Some packages (errors, sync, context, testing, reflect, and unsafe) are covered in their own chapters. In this chapter, we’ll look at Go’s built-in support for I/O, time, JSON, and HTTP.
+
+Moreover, many of the packages contain working, self-contained executable examples you can run directly from the [golang.org](https://golang.org/) web site, such as [this one](https://go.dev/pkg/strings/#example_Map) (if necessary, click on the word "Example" to open it up). If you have a question about how to approach a problem or how something might be implemented, the documentation, code and examples in the library can provide answers, ideas and background.
+
+## fmt
+
+### 方便的 %v
+
+If you just want the default conversion, such as decimal for integers, you can use the catchall format `%v` (for “value”); the result is exactly what `Print` and `Println` would produce. Moreover, that format can print *any* value, even arrays, slices, structs, and maps.
+
+```go
+fmt.Printf("%v\n", timeZone)   // 等价于 fmt.Println(timeZone)
+var c = Character{Name: "Cloud", From: "FF7", Age: 21}
+fmt.Printf("%+v\n", c)         // 打印结构体时带上字段名
+fmt.Printf("%#v\n", c)         // prints the value in full Go syntax.
+```
+
+### Stringer 接口
+
+如果 `User` 类型有个 `time.Time` 字段,  那么直接用 `fmt` 打印会很丑,  
+可以实现 `Stringer` 接口,  然后 `fmt.Println` 就会调用这个接口把 `User` 转成 `string`
+
+```go
+type Character struct {
+	Name string
+	From string
+	Age  int
+}
+func (c Character) String() string {
+	return fmt.Sprintf("(%q, %q, %v)", c.Name, c.From, c.Age)
+    // return fmt.Sprintf("%v", c)  // 小心无限递归,  fmt 处理 %s/%v/%q 时又会调用 String()
+}
+func main() {
+	var c = Character{Name: "Cloud", From: "FF7", Age: 21}
+	fmt.Println(c)
+}
+```
 
 ## io
 
@@ -215,6 +257,48 @@ To limit the amount of code that cares about what your JSON looks like, define t
 
 While JSON is probably the most commonly used encoder in the standard library, Go ships with others, including XML and Base64. If you have a data format that you want to encode and you can’t find support for it in the standard library or a thirdparty module, you can write one yourself. We’ll learn how to implement our own encoder in “Use Reflection to Write a Data Marshaler” on page 307.  
 
+### json.RawMessage 有什么用
+
+➤ 若 status 字段可能为 string 或 number,  可以用 json.RawMessage 延迟解析
+
+```go
+func main() {
+	records := [][]byte{
+		[]byte(`{"status": 200, "tag":"one"}`),
+		[]byte(`{"status":"ok", "tag":"two"}`),
+	}
+
+	for idx, record := range records {
+		var result struct {
+			StatusCode uint64
+			StatusName string
+			Status     json.RawMessage `json:"status"`
+			Tag        string          `json:"tag"`
+		}
+
+		// 注意 Status 字段的类型为 json.RawMessage
+		// 所谓 json.RawMessage 是个 byte slice,  表示先把数据存下来,  等下再进一步解析
+		if err := json.NewDecoder(bytes.NewReader(record)).Decode(&result); err != nil {
+			fmt.Println("error:", err)
+			return
+		}
+
+		// records 中的 status 字段可能是字符串,  也可能是数字
+		var stringStatus string
+		if err := json.Unmarshal(result.Status, &stringStatus); err == nil {
+			result.StatusName = stringStatus
+		}
+
+		var numberStatus uint64
+		if err := json.Unmarshal(result.Status, &numberStatus); err == nil {
+			result.StatusCode = numberStatus
+		}
+
+		fmt.Printf("[%v] result => %+v\n", idx, result)
+	}
+}
+```
+
 ## net/http
 
 Every language ships with a standard library, but the expectations of what a standard library should include have changed over time. As a language launched in the 2010s, Go’s standard library includes something that *other language distributions had considered the responsibility of a third party*: a production quality HTTP/2 client and server.
@@ -268,3 +352,64 @@ A server that only handles a single request isn’t terribly useful, so the Go s
 Package exec runs external commands. It wraps os.StartProcess to make it easier to remap stdin and stdout, connect I/O with pipes, and do other adjustments.
 
 Unlike the "system" library call from C and other languages, <font color='#D05'>the os/exec package intentionally does not invoke the system shell</font> and does not expand any glob patterns or handle other expansions, pipelines, or redirections typically done by shells. The package behaves more like C's "exec" family of functions. To expand glob patterns, either call the shell directly, taking care to escape any dangerous input, or use the path/filepath package's Glob function. To expand environment variables, use package os's ExpandEnv.
+
+## sort
+
+### 例子
+
+➤ [参考例子](https://go.dev/doc/effective_go#:~:text=bytes.Buffer.-,Interfaces%20and%20other%20types,-Interfaces)
+
+1. 想让自定义类型支持排序,  可以实现 `sort.Interface`
+2. `sort.Sort` 和 `sort.Stable` 分别是不稳定排序、和稳定排序
+3. 如果实现 `Less` 方法时需要比较两个浮点数,  要考虑 `NaN`,  参考 `sort.Float64Slice` 的 `Less` 实现
+
+➤ 有现成函数对 `[]int`、`[]string`、`[]float64` 排序
+
+```go
+type Sequence []int
+
+func main() {
+	var s = Sequence{3, 2, 1}
+	fmt.Println(s)
+	sort.Ints(s)            // It's an idiom in Go programs to convert the type of
+	sort.IntSlice(s).Sort() // an expression to access a different set of methods.
+	fmt.Println(s)
+}
+
+func (s Sequence) Copy() Sequence {
+    copy := make(Sequence, 0, len(s))
+    return append(copy, s...)
+}
+
+func (s Sequence) String() string {
+    // Now, instead of having Sequence implement multiple interfaces (sorting and printing), 
+    // we're using the ability of a data item to be converted to multiple types (Sequence, sort.IntSlice and []int), 
+    // each of which does some part of the job.
+    s = s.Copy()                 // 转成 Sequence 利用它的 Copy f
+    sort.IntSlice(s).Sort()      // 转成 sort.IntSlice 利用它的排序方法
+    return fmt.Sprint([]int(s))  // 转成 []int 利用 fmt.Sprint 对 []int 的支持
+}
+```
+
+➤ The other way is to use `sort.Slice` with a custom `Less` function.
+
+```go
+sort.Slice(people, func(i, j int) bool {
+	return people[i].Age < people[j].Age
+})
+```
+
+➤ 若需要支持多种排序方式, [参考 sort 包的三个例子](https://pkg.go.dev/sort#example-package-SortKeys)
+
+```go
+// Sort the planets by the various criteria.
+By(name).Sort(planets)
+By(mass).Sort(planets)
+
+OrderedBy(user).Sort(changes)
+OrderedBy(user, increasingLines).Sort(changes)
+
+sort.Sort(ByWeight{s})
+sort.Sort(ByName{s})
+```
+

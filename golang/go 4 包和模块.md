@@ -93,6 +93,8 @@ You can also use `_` as the package name. We’ll explore what this does when we
 
 ### 谨慎使用 init 函数
 
+➤ `init` 可用来初始化包级别的变量/状态
+
 One of the reasons why Go doesn’t have method overriding or function overloading is to make it easier to understand what code is running. However, there is a way to set up state in a package without explicitly calling anything: the `init` function.   
 
 When you declare a function named `init` that takes no parameters and returns no values, *it runs the first time the package is referenced by another package*. Since `init` functions do not have any inputs or outputs, they can only work by side effect, interacting with package-level functions and variables.  
@@ -100,6 +102,13 @@ When you declare a function named `init` that takes no parameters and returns no
 Some packages, like database drivers, use `init` functions to register the database driver. However, you don’t use any of the identifiers in the package. 比如用 `import _ "github.com/lib/pq"` 注册数据库驱动.
 
 This pattern is considered obsolete because it’s unclear that a registration operation is being performed. If you have a registry pattern in your own code, register your plug-ins explicitly. The primary use of `init` functions today is to initialize package-level variables that can’t be configured in a single assignment.
+
+➤ init 在什么时候执行?  (假设运行 b 包、并且 b 导入了 a)
+
+1. 因为 b 包导入了 a 包, 所以先初始化 a 包
+2. 初始化一个包时,  先执行的 `var Name = getName()` 这样的变量定义
+3. 等包中所有的 `var Name = getName()` 都执行完了,  才会执行包中的若干个 `init()`
+4. 最后初始化 b 包并执行 b 包的 `main` 函数
 
 ### 类型别名
 

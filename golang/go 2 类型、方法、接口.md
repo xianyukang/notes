@@ -1,16 +1,21 @@
 ## Table of Contents
   - [Methods](#Methods)
     - [指针接收器和值接收器](#%E6%8C%87%E9%92%88%E6%8E%A5%E6%94%B6%E5%99%A8%E5%92%8C%E5%80%BC%E6%8E%A5%E6%94%B6%E5%99%A8)
+    - [指针的 method set 包含更多方法](#%E6%8C%87%E9%92%88%E7%9A%84-method-set-%E5%8C%85%E5%90%AB%E6%9B%B4%E5%A4%9A%E6%96%B9%E6%B3%95)
+    - [能在值变量上调用指针方法](#%E8%83%BD%E5%9C%A8%E5%80%BC%E5%8F%98%E9%87%8F%E4%B8%8A%E8%B0%83%E7%94%A8%E6%8C%87%E9%92%88%E6%96%B9%E6%B3%95)
+    - [在 nil 指针上调用方法?](#%E5%9C%A8-nil-%E6%8C%87%E9%92%88%E4%B8%8A%E8%B0%83%E7%94%A8%E6%96%B9%E6%B3%95)
     - [能传函数的地方也能传方法](#%E8%83%BD%E4%BC%A0%E5%87%BD%E6%95%B0%E7%9A%84%E5%9C%B0%E6%96%B9%E4%B9%9F%E8%83%BD%E4%BC%A0%E6%96%B9%E6%B3%95)
+    - [两个限制](#%E4%B8%A4%E4%B8%AA%E9%99%90%E5%88%B6)
   - [Types](#Types)
     - [类型声明不是继承](#%E7%B1%BB%E5%9E%8B%E5%A3%B0%E6%98%8E%E4%B8%8D%E6%98%AF%E7%BB%A7%E6%89%BF)
     - [底层类型相同时允许类型转换](#%E5%BA%95%E5%B1%82%E7%B1%BB%E5%9E%8B%E7%9B%B8%E5%90%8C%E6%97%B6%E5%85%81%E8%AE%B8%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2)
     - [使用 iota 做枚举](#%E4%BD%BF%E7%94%A8-iota-%E5%81%9A%E6%9E%9A%E4%B8%BE)
-    - [使用嵌入来组合对象](#%E4%BD%BF%E7%94%A8%E5%B5%8C%E5%85%A5%E6%9D%A5%E7%BB%84%E5%90%88%E5%AF%B9%E8%B1%A1)
+    - [使用 Embedding 来组合类型](#%E4%BD%BF%E7%94%A8-Embedding-%E6%9D%A5%E7%BB%84%E5%90%88%E7%B1%BB%E5%9E%8B)
     - [嵌入一个类型、并重定义某些方法](#%E5%B5%8C%E5%85%A5%E4%B8%80%E4%B8%AA%E7%B1%BB%E5%9E%8B%E5%B9%B6%E9%87%8D%E5%AE%9A%E4%B9%89%E6%9F%90%E4%BA%9B%E6%96%B9%E6%B3%95)
   - [Interfaces](#Interfaces)
     - [定义接口](#%E5%AE%9A%E4%B9%89%E6%8E%A5%E5%8F%A3)
     - [隐式接口与鸭子类型](#%E9%9A%90%E5%BC%8F%E6%8E%A5%E5%8F%A3%E4%B8%8E%E9%B8%AD%E5%AD%90%E7%B1%BB%E5%9E%8B)
+    - [也能显式声明要实现的接口](#%E4%B9%9F%E8%83%BD%E6%98%BE%E5%BC%8F%E5%A3%B0%E6%98%8E%E8%A6%81%E5%AE%9E%E7%8E%B0%E7%9A%84%E6%8E%A5%E5%8F%A3)
     - [嵌入接口](#%E5%B5%8C%E5%85%A5%E6%8E%A5%E5%8F%A3)
     - [入参用接口、反参用具体类型](#%E5%85%A5%E5%8F%82%E7%94%A8%E6%8E%A5%E5%8F%A3%E5%8F%8D%E5%8F%82%E7%94%A8%E5%85%B7%E4%BD%93%E7%B1%BB%E5%9E%8B)
     - [接口包含 type 和 value 两个字段](#%E6%8E%A5%E5%8F%A3%E5%8C%85%E5%90%AB-type-%E5%92%8C-value-%E4%B8%A4%E4%B8%AA%E5%AD%97%E6%AE%B5)
@@ -44,7 +49,7 @@ Go uses parameters of pointer type to indicate that a parameter might be modifie
 
 When a type has any pointer receiver methods, a common practice is to be consistent and use pointer receivers for all methods, even the ones that don’t modify the receiver.
 
-➤ 指针实例的 method set 包含更多方法
+### 指针的 method set 包含更多方法
 
 ```go
 func main() {
@@ -59,11 +64,34 @@ func main() {
 }
 ```
 
-Go considers both pointer and value receiver methods to be in the method set for a pointer instance. For a value instance, only the value receiver methods are in the method set.   
+Go considers both pointer and value receiver methods to be in the method set for a pointer instance. For a value instance, only the value receiver methods are in the method set.
 
-One thing you might notice is that we were able to call the pointer receiver method even though `c` is a value type. When you use a pointer receiver with a local variable that’s a value type, Go automatically converts it to a pointer type. In this case, `c.Add()` is converted to `(&c).Add()`.  
+### 能在值变量上调用指针方法
 
-➤ 在 `nil` 指针上调用方法会发生什么?
+One thing you might notice is that we were able to call the pointer receiver method even though `c` is a value type. When you use a pointer method with a local variable that’s a value type, Go automatically converts it to a pointer type. In this case, `c.Add()` is converted to `(&c).Add()`. But `c().Add()` can't be converted to `(&c()).Add()`.
+
+It's OK to call a pointer receiver method on a value as long as the value is addressable. Not every variable is addressable though. Map elements are not addressable (you can't `&someMap["key"]`).
+
+```go
+func (c *Character) SayHi() {
+	fmt.Println("Hi, I am", c.Name)
+}
+
+func main() {
+	var c = Character{Name: "Cloud", From: "FF7", Age: 21}
+	c.SayHi()            // c 是值类型、并且 addressable
+	(&c).SayHi()         // 所以编译器会自动把上一行重写成这一行
+
+	var foo SayHier = &c // 这里必须用 &c 取指针, 如果用 c 会编译错误
+	foo.SayHi()          // 因为 c 是值类型,  c 的方法集不包括 SayHi()
+}
+
+type SayHier interface {
+	SayHi()
+}
+```
+
+### 在 nil 指针上调用方法?
 
 What happens when you call a method on a `nil` instance? In most languages, this produces some sort of error.  Go does something a little different. It actually tries to invoke the method. If it’s a method with a value receiver, you’ll get a panic, as there is no value being pointed to by the pointer. If it’s a method with a pointer receiver, it can work if the method is written to handle the possibility of a nil instance. 
 
@@ -82,6 +110,13 @@ Methods in Go are so much like functions that you can use a method *as a replace
 You can also create a function from the type itself. This is called a *method expression*. In the case of a method expression, the first parameter is the receiver for the method.
 
 ![image-20220512111201885](https://static.xianyukang.com/img/image-20220512111201885.png) 
+
+### 两个限制
+
+➤ [参考回答](https://stackoverflow.com/a/65441367)
+
+1. 如果 base type 是指针或接口,  则不能添加任何方法,  例如 `type Counter *int`
+2. 无法为另一个包中的类型添加方法,  例如 `func (t *time.Time) Hello() {}`
 
 ## Types
 
@@ -118,7 +153,7 @@ Use iota for “internal” purposes only. iota-based enumerations only make sen
 
 Be aware that iota starts numbering from 0.  When mail first arrives, it is uncategorized, so the zero value makes sense. If there isn’t a sensical default value for your constants, a common pattern is to assign the first `iota` value in the constant block to a constant that indicates the value is invalid.
 
-### 使用嵌入来组合对象
+### 使用 Embedding 来组合类型
 
 The software engineering advice “Favor object composition over class inheritance”. While Go doesn’t have inheritance, it encourages code reuse via built-in support for composition and promotion.
 
@@ -132,6 +167,17 @@ Note that `Manager` contains a field of type `Employee`, but no name is assigned
 
 You cannot assign a variable of type `Manager` to a variable of type `Employee`.  
 If you want to access the Employee field in Manager, you must do so explicitly: `var e = m.Employee`.
+
+➤ 调用被提升的方法时,  receiver 不是外层类型
+
+When we embed a type, the methods of that type become methods of the outer type, but when they are invoked the receiver of the method is the inner type, not the outer one. 
+
+```go
+type Manager struct { company.Employee }          // 所谓嵌入 company.Employee 类型
+type Manager struct { Employee company.Employee } // 相当于添加一个 Employee 字段,  但是方法被提升到外层
+m.Name   <=> m.Employee.Name
+m.Work() <=> m.Employee.Work()                    // m.Work() 的 receiver 是 m.Employee 而不是 m
+```
 
 ### 嵌入一个类型、并重定义某些方法
 
@@ -163,9 +209,43 @@ function Vergil(thatGuy) {
 }
 ```
 
+### 也能显式声明要实现的接口
+
+If `json.RawMessage` needs a custom JSON representation, it should implement `json.Marshaler`, but there are no static conversions that would cause the compiler to verify this automatically. To guarantee that the implementation is correct, a global declaration using the blank identifier can be used in the package:
+
+```go
+var _ json.Marshaler = (*RawMessage)(nil) // 让编译器检查 RawMessage 是否实现了 json.Marshaler 接口
+```
+
 ### 嵌入接口
 
-Just like you can embed a type in a struct, you can also embed an interface in an interface. For example, the `io.ReadCloser` interface is built out of an `io.Reader` and an `io.Closer`. Just like you can embed a concrete type in a struct, you can also embed an interface in a struct. [在结构体中嵌入一个接口有何好处?](https://stackoverflow.com/a/24537547)
+Just like you can embed a type in a struct, you can also embed an interface in an interface. For example, the `io.ReadCloser` interface is built out of an `io.Reader` and an `io.Closer`. Just like you can embed a concrete type in a struct, you can also embed an interface in a struct. 
+
+➤ [在结构体中嵌入一个接口有何好处?](https://stackoverflow.com/a/24537547) 相当于添加一个字段,  但类型为接口,  并且接口方法提升到结构体
+
+```go
+type Weapon interface{ WeaponAbility() string }
+type WeaponFunc func() string
+func (f WeaponFunc) WeaponAbility() string { return f() }
+
+type Character struct {
+	Name   string
+	From   string
+	Age    int
+	Weapon // 嵌入一个接口
+}
+
+func main() {
+	var dante = Character{Name: "但丁", From: "DMC", Age: 40}
+	var 魔剑但丁 = WeaponFunc(func() string { return "咿呀剑法" })
+	var 黑檀木与白象牙 = WeaponFunc(func() string { return "旋转跳跃突突突" })
+
+	dante.Weapon = 魔剑但丁
+	fmt.Println(dante.WeaponAbility())
+	dante.Weapon = 黑檀木与白象牙
+	fmt.Println(dante.WeaponAbility())
+}
+```
 
 ### 入参用接口、反参用具体类型
 

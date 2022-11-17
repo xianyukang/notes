@@ -76,7 +76,7 @@ The advantage of using the _test package suffix is that it lets you treat your p
 
 ### Use go-cmp to Compare Test Results
 
-It can be verbose to write a thorough comparison between two instances of a compound type. While you can use reflect.DeepEqual to compare structs, maps, and slices, there’s a better way. Google released a third-party module called go-cmp that does the comparison for you and returns a detailed description of what does not match.
+It can be verbose to write a thorough comparison between two instances of a compound type. While you can use reflect.DeepEqual to compare structs, maps, and slices, there’s a better way. Google released a third-party module called `go-cmp` that does the comparison for you and returns a detailed description of what does not match.
 
 ![image-20220718131426057](https://static.xianyukang.com/img/image-20220718131426057.png) 
 

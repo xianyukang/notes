@@ -15,8 +15,10 @@
     - [小心对子切片调用 append](#%E5%B0%8F%E5%BF%83%E5%AF%B9%E5%AD%90%E5%88%87%E7%89%87%E8%B0%83%E7%94%A8-append)
     - [指向切片的指针有什么用?](#%E6%8C%87%E5%90%91%E5%88%87%E7%89%87%E7%9A%84%E6%8C%87%E9%92%88%E6%9C%89%E4%BB%80%E4%B9%88%E7%94%A8)
     - [copy 函数](#copy-%E5%87%BD%E6%95%B0)
+    - [拼接两个切片](#%E6%8B%BC%E6%8E%A5%E4%B8%A4%E4%B8%AA%E5%88%87%E7%89%87)
   - [字符串](#%E5%AD%97%E7%AC%A6%E4%B8%B2)
     - [字符串如何工作](#%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C)
+    - [字符串的 for-range 循环](#%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84-forrange-%E5%BE%AA%E7%8E%AF)
     - [rune 字面量](#rune-%E5%AD%97%E9%9D%A2%E9%87%8F)
     - [其他细节](#%E5%85%B6%E4%BB%96%E7%BB%86%E8%8A%82)
   - [Map](#Map)
@@ -28,7 +30,7 @@
     - [匿名结构体](#%E5%8C%BF%E5%90%8D%E7%BB%93%E6%9E%84%E4%BD%93)
   - [指针](#%E6%8C%87%E9%92%88)
     - [理解 nil](#%E7%90%86%E8%A7%A3-nil)
-    - [new 函数](#new-%E5%87%BD%E6%95%B0)
+    - [理解 new 函数](#%E7%90%86%E8%A7%A3-new-%E5%87%BD%E6%95%B0)
     - [无法把字面量赋值给指针](#%E6%97%A0%E6%B3%95%E6%8A%8A%E5%AD%97%E9%9D%A2%E9%87%8F%E8%B5%8B%E5%80%BC%E7%BB%99%E6%8C%87%E9%92%88)
   - [指针使用建议](#%E6%8C%87%E9%92%88%E4%BD%BF%E7%94%A8%E5%BB%BA%E8%AE%AE)
     - [使用 Pointer 还是 Value?](#%E4%BD%BF%E7%94%A8-Pointer-%E8%BF%98%E6%98%AF-Value)
@@ -93,13 +95,13 @@ There is one more numeric type and it is pretty unusual. Go has first-class supp
 ### 数组
 
 golang 数组是一种值类型，数组本身的赋值和函数传参都是以整体复制的方式处理的.  
+若在函数中修改数组,  记得传数组指针,  否则改的是拷贝,  外面看不到
+
 <font color='#D05'>另外数组的长度是数组类型的一部分，两个不同长度的数组属于不同的类型</font>，这意味着
 
 1. `[2]int` 无法赋值给 `[3]int`
 2. 一个处理 [2]int 类型的函数只能处理 [2]int,  无法写出一个函数来处理任意长度的数组
 3. 无法用一个变量来指定数组长度, 因为数组的长度必须在编译时确定
-
-由于以上不便性,  所以数组用的很少,  切片用的很多
 
 ### 切片结构
 
@@ -122,7 +124,7 @@ The rules as of Go 1.14 are to double the size of the slice when the capacity is
 
 ### make 函数
 
-`make` allows us to specify the type, length, and, optionally, the capacity.  
+`make` allows us to specify the type, length, and, optionally, the capacity. The built-in function `make(T,args)` serves a purpose different from `new(T)`. It creates slices, maps, and channels only.
 
 ```go
 x := make([]int, 5)    // len:5, cap:5
@@ -160,7 +162,7 @@ z[0] = 333                   // 修改 z[0] 会同时影响 x,y,z 三个切片
 ➤ 为什么 y 的容量是 4 而不是 2
 
 Whenever you take a slice from another slice, the subslice’s capacity is set to the capacity of the original slice, minus the offset of the subslice within the original slice.  
-对于 y 切片来说,  源切片的容量是 4,  y 源父切片中的偏移量为 0,  所以容量为 4 - 0 = 4
+对于 y 切片来说,  源切片的容量是 4,  y 在源切片中的偏移量为 0,  所以容量为 4 - 0 = 4
 
 ➤ 为什么往 append(y, 30) 会导致 x 变化
 
@@ -189,6 +191,45 @@ If you need to create a slice that’s independent of the original, use the buil
 
 ![image-20220511170137047](https://static.xianyukang.com/img/image-20220511170137047.png) 
 
+### 拼接两个切片
+
+➤ [参考回答](https://stackoverflow.com/a/58726780)
+
+可以用 `c := append(a, b...)` 但这并不像 `a := append(a, b...)` 那样安全  
+因为 a 和 c 可能使用同一底层数组,  替换 a 中元素、或往 a 添加元素、都会影响到 c
+
+```go
+func main() {
+	a := make([]int, 3, 6)
+	b := []int{1, 1, 1}
+	c := append(a, b...) // c 与 a 共用同一底层数组
+	a[0] = 666           // 替换 a 中元素会影响到 c
+	fmt.Println(c)       // c[0] 也变成了 666
+}
+```
+
+➤ 可以自己写个 `Append` 函数
+
+```go
+func Append(a, b []int) []int {
+	newLen := len(a) + len(b)
+	newSlice := make([]int, newLen, newLen*2) // Allocate double what's needed, for future growth.
+	copy(newSlice, a)
+	copy(newSlice[len(a):], b)
+	return newSlice
+}
+
+func main() {
+	a := make([]int, 3, 6)
+	b := []int{1, 1, 1}
+	c := Append(a, b)              // c 是重新分配的
+	a[0] = 666                     //
+	fmt.Println(c, len(c), cap(c)) // c[0] 依旧是 0, 不会被 a 影响
+}
+```
+
+
+
 ## 字符串
 
 ### 字符串如何工作
@@ -209,6 +250,25 @@ func how_strings_work_in_go() {
 	// 如果你把 rune 传递给 fmt.Println，你会在输出中看到一个数字，而不是原始字符。
 	fmt.Printf("狗头的 unicode 码点: 0x%x \n", '🐶')
 }
+```
+
+### 字符串的 for-range 循环
+
+For strings, the `range` does more work for you, breaking out individual Unicode code points by parsing the UTF-8. Erroneous encodings consume one byte and produce the replacement rune U+FFFD.
+
+```go
+for pos, char := range "日本\x80語" { // \x80 is an illegal UTF-8 encoding
+    fmt.Printf("character %#U starts at byte position %d\n", char, pos)
+}
+```
+
+prints
+
+```bash
+character U+65E5 '日' starts at byte position 0
+character U+672C '本' starts at byte position 3
+character U+FFFD '�' starts at byte position 6
+character U+8A9E '語' starts at byte position 7
 ```
 
 ### rune 字面量
@@ -306,7 +366,7 @@ There are two common situations where anonymous structs are handy.
 
 <font color='#D05'>Before dereferencing a pointer, you must make sure that the pointer is non-nil</font>. Your program will panic if you attempt to dereference a nil pointer.
 
-### new 函数
+### 理解 new 函数
 
 ![image-20220510205008434](https://static.xianyukang.com/img/image-20220510205008434.png) 
 
@@ -315,6 +375,28 @@ There are two common situations where anonymous structs are handy.
 [参考: Is there a difference between new() and "regular" allocation?](https://stackoverflow.com/questions/13244947/is-there-a-difference-between-new-and-regular-allocation)  
 `new()` is the only way to get a pointer to an unnamed integer or other basic type.   
 You can write `p := new(int)` but you can't write `p := &int{0}`. Other than that, it's a matter of preference.
+
+➤ `new` 并不负责初始化
+
+`new` is a built-in function that allocates memory, but unlike its namesakes in some other languages it does not *initialize* the memory, it only *zeros* it. That is, `new(T)` allocates zeroed storage for a new item of type `T` and returns its address, a value of type `*T`.
+
+➤ 尽量让类型的零值直接可用
+
+Since the memory returned by `new` is zeroed, it's helpful to arrange when designing your data structures that the zero value of each type can be used without further initialization. This means a user of the data structure can create one with `new` and get right to work. For example, the documentation for `bytes.Buffer` states that "the zero value for `Buffer` is an empty buffer ready to use." Similarly, `sync.Mutex` does not have an explicit constructor or `Init` method. Instead, the zero value for a `sync.Mutex` is defined to be an unlocked mutex. Sometimes the zero value isn't good enough and an initializing constructor is necessary.
+
+➤ new 与 make 的区别
+
+`make` applies only to maps, slices and channels and does not return a pointer.
+
+```go
+var p *[]int = new([]int)       // allocates slice structure; *p == nil; rarely useful
+var v  []int = make([]int, 100) // the slice v now refers to a new array of 100 ints
+
+var p *[]int = new([]int)       // Unnecessarily complex:
+*p = make([]int, 100, 100)
+```
+
+
 
 ### 无法把字面量赋值给指针
 

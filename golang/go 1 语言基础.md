@@ -6,6 +6,7 @@
     - [字面量没有类型](#%E5%AD%97%E9%9D%A2%E9%87%8F%E6%B2%A1%E6%9C%89%E7%B1%BB%E5%9E%8B)
     - [通过 Const 给字面量命名](#%E9%80%9A%E8%BF%87-Const-%E7%BB%99%E5%AD%97%E9%9D%A2%E9%87%8F%E5%91%BD%E5%90%8D)
     - [变量遮蔽](#%E5%8F%98%E9%87%8F%E9%81%AE%E8%94%BD)
+  - [Control Structures](#Control-Structures)
     - [独特的 if 语句](#%E7%8B%AC%E7%89%B9%E7%9A%84-if-%E8%AF%AD%E5%8F%A5)
     - [For 循环的四种写法](#For-%E5%BE%AA%E7%8E%AF%E7%9A%84%E5%9B%9B%E7%A7%8D%E5%86%99%E6%B3%95)
     - [独特的 switch 语句](#%E7%8B%AC%E7%89%B9%E7%9A%84-switch-%E8%AF%AD%E5%8F%A5)
@@ -21,6 +22,7 @@
   - [defer](#defer)
     - [defer 通常用来关闭资源](#defer-%E9%80%9A%E5%B8%B8%E7%94%A8%E6%9D%A5%E5%85%B3%E9%97%AD%E8%B5%84%E6%BA%90)
     - [defer 在什么时候执行](#defer-%E5%9C%A8%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E6%89%A7%E8%A1%8C)
+    - [注意事项](#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9)
 
 ## 语言基础
 
@@ -119,6 +121,8 @@ x := 10
 fmt.Println(x) // 注意值是 10 而不是 5
 ```
 
+## Control Structures
+
 ### 独特的 if 语句
 
 The most visible difference between if statements in Go and other languages is that you don’t put parenthesis around the condition. What Go adds is the ability to declare variables that are scoped to the condition and to both the if and else blocks.
@@ -189,6 +193,26 @@ In our sample program we are switching on the value of an integer, but that’s 
 You can write a switch statement that doesn’t specify the value that you’re comparing against. This is called a blank switch. A regular switch only allows you to check a value for equality. A blank switch allows you to use any boolean comparison for each case.
 
 ![image-20220509121137866](https://static.xianyukang.com/img/image-20220509121137866.png) 
+
+➤ 总结
+
+Go's `switch` is more general than C's. The expressions need not be constants or even integers, the cases are evaluated top to bottom until a match is found, and if the `switch` has no expression (blank switch) it switches on `true`. It's therefore possible—and idiomatic—to write an `if`-`elseif`-`else` chain as a `switch`.
+
+```go
+func unhex(c byte) byte {
+    switch {
+    case '0' <= c && c <= '9':
+        return c - '0'
+    case 'a' <= c && c <= 'f':
+        return c - 'a' + 10
+    case 'A' <= c && c <= 'F':
+        return c - 'A' + 10
+    }
+    return 0
+}
+```
+
+
 
 ## 函数
 
@@ -331,4 +355,29 @@ defer 有时候不执行, 比如 `log.Fatal`、`os.Exit`、终端中按下 `Ctrl
 ➤ 用 defer 修改函数返回值
 
 ![image-20220509234632112](https://static.xianyukang.com/img/image-20220509234632112.png)  
+
+### 注意事项
+
+Deferring a call to a function such as `Close` has two advantages. First, it guarantees that you will never forget to close the file, a mistake that's easy to make if you later edit the function to add a new return path. Second, it means that the close sits near the open, which is much clearer than placing it at the end of the function.
+
+➤ The arguments to the deferred function are evaluated when the defer executes, not when the call executes.
+
+```go
+func main() {
+	// defer 函数的参数, 比如此处的 i, 会在执行 defer 这一行时存一个快照
+	// 所以不必担心 i 的值会变,  只需考虑 i 的当前值
+	for i := 0; i < 5; i++ {
+		defer fmt.Printf("%d ", i)
+	}
+
+	// 闭包之常见错误,  捕获一个会变的变量,  等到函数执行时 i 的值已经变成了 15
+	for i := 10; i < 15; i++ {
+		defer func() {
+			fmt.Printf("%d ", i)
+		}()
+	}
+}
+```
+
+➤ `defer` is not block-based but function-based
 
