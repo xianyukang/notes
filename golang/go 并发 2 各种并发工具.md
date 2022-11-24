@@ -36,7 +36,6 @@
   - [补充内容](#%E8%A1%A5%E5%85%85%E5%86%85%E5%AE%B9)
     - [Using WaitGroups](#Using-WaitGroups)
     - [Using ErrGroup](#Using-ErrGroup)
-    - [](#)
 
 ## Goroutine
 
@@ -1021,5 +1020,3 @@ func Google(ctx context.Context, query string, searches []Search) ([]Result, err
 	return results, nil
 }
 ```
-
-### 
