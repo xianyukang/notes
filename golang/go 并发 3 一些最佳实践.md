@@ -42,31 +42,31 @@ pass the current value of the variable into the goroutine.
 
 ```go
 func 闭包与可变变量() {
-	a := []int{2, 4, 6, 8, 10}
-	ch := make(chan int, len(a))
-	for _, v := range a {
-		go func() {
-			ch <- v * 2 // 这里捕获了一个会变的变量 v
-		}() // 当 goroutine 真正执行时,  v 已经发生了变化
-	}
-	for i := 0; i < len(a); i++ {
-		fmt.Println(<-ch)
-	}
+    a := []int{2, 4, 6, 8, 10}
+    ch := make(chan int, len(a))
+    for _, v := range a {
+        go func() {
+            ch <- v * 2 // 这里捕获了一个会变的变量 v
+        }() // 当 goroutine 真正执行时,  v 已经发生了变化
+    }
+    for i := 0; i < len(a); i++ {
+        fmt.Println(<-ch)
+    }
 
-	// 解决办法 (1)
-	for _, v := range a {
-		var v = v   // shadow the value within the loop
-		go func() { // for 循环内的同名变量 v 不会发生变化
-			ch <- v * 2
-		}()
-	}
+    // 解决办法 (1)
+    for _, v := range a {
+        var v = v   // shadow the value within the loop
+        go func() { // for 循环内的同名变量 v 不会发生变化
+            ch <- v * 2
+        }()
+    }
 
-	// 解决办法 (2)
-	for _, v := range a {
-		go func(val int) {
-			ch <- val * 2
-		}(v) // 启动 goroutine 时把函数参数传过去
-	}
+    // 解决办法 (2)
+    for _, v := range a {
+        go func(val int) {
+            ch <- val * 2
+        }(v) // 启动 goroutine 时把函数参数传过去
+    }
 }
 ```
 
@@ -80,24 +80,24 @@ When that happens, we rely on something that looks like an error: reading a `nil
 
 ```go
 func for_select_循环中记得检测已关闭的_channel(done, in, in2 chan int) {
-	for {
-		select {
-		case v, ok := <-in:
-			if !ok {
-				in = nil // the case will never succeed again!
-				continue
-			}
-			fmt.Println(v) // process the v that was read from in
-		case v, ok := <-in2:
-			if !ok {
-				in2 = nil // the case will never succeed again!
-				continue
-			}
-			fmt.Println(v) // process the v that was read from in2
-		case <-done:
-			return
-		}
-	}
+    for {
+        select {
+        case v, ok := <-in:
+            if !ok {
+                in = nil // the case will never succeed again!
+                continue
+            }
+            fmt.Println(v) // process the v that was read from in
+        case v, ok := <-in2:
+            if !ok {
+                in2 = nil // the case will never succeed again!
+                continue
+            }
+            fmt.Println(v) // process the v that was read from in2
+        case <-done:
+            return
+        }
+    }
 }
 ```
 
@@ -111,34 +111,34 @@ The `countTo` function creates two channels, one that returns data and another f
 
 ```go
 func main2() {
-	// 返回一个 cancel 函数来做必要的清理
-	ch, cancel := countTo(10)
-	defer cancel()
-	for i := range ch {
-		if i > 5 {
-			break // 就算数到 5 便中途退出,  也不会 goroutine 泄漏
-		}
-		fmt.Println(i)
-	}
+    // 返回一个 cancel 函数来做必要的清理
+    ch, cancel := countTo(10)
+    defer cancel()
+    for i := range ch {
+        if i > 5 {
+            break // 就算数到 5 便中途退出,  也不会 goroutine 泄漏
+        }
+        fmt.Println(i)
+    }
 }
 
 func countTo(max int) (<-chan int, func()) {
-	ch := make(chan int)
-	done := make(chan struct{})
-	cancel := func() {
-		close(done)
-	}
-	go func() {
-		for i := 0; i < max; i++ {
-			select {
-			case <-done:
-				return
-			case ch <- i:
-			}
-		}
-		close(ch)
-	}()
-	return ch, cancel
+    ch := make(chan int)
+    done := make(chan struct{})
+    cancel := func() {
+        close(done)
+    }
+    go func() {
+        for i := 0; i < max; i++ {
+            select {
+            case <-done:
+                return
+            case ch <- i:
+            }
+        }
+        close(ch)
+    }()
+    return ch, cancel
 }
 ```
 
@@ -152,21 +152,21 @@ The done channel pattern provides a way to signal a goroutine that it’s time t
 type stringHandler func(string) []string
 
 func searchData(s string, handlers []stringHandler) []string {
-	done := make(chan struct{})
-	result := make(chan []string)
-	// 开启一堆 goroutine 去处理同一数据,  选择首个返回的结果
-	for _, handler := range handlers {
-		go func(handler stringHandler) {
-			select {
-			case result <- handler(s):
-			case <-done:
-			}
-		}(handler)
-	}
-	// 从 result channel 中读取一个结果,  然后关掉 done channel,  通知其他协程退出
-	r := <-result
-	close(done)
-	return r
+    done := make(chan struct{})
+    result := make(chan []string)
+    // 开启一堆 goroutine 去处理同一数据,  选择首个返回的结果
+    for _, handler := range handlers {
+        go func(handler stringHandler) {
+            select {
+            case result <- handler(s):
+            case <-done:
+            }
+        }(handler)
+    }
+    // 从 result channel 中读取一个结果,  然后关掉 done channel,  通知其他协程退出
+    r := <-result
+    close(done)
+    return r
 }
 ```
 
@@ -180,21 +180,21 @@ Buffered channels work great when you want to either *gather data back from a se
 
 ```go
 func handleTenTasks(tasks <-chan int) []int {
-	const workerCount = 10
-	results := make(chan int, workerCount)
-	
-	for i := 0; i < workerCount; i++ {
-		go func() {
-			t := <-tasks
-			results <- handle(t) // 一人一个坑位,  所以不会阻塞
-		}()
-	}
-	
-	var out []int
-	for i := 0; i < workerCount; i++ {
-		out = append(out, <-results)
-	}
-	return out
+    const workerCount = 10
+    results := make(chan int, workerCount)
+    
+    for i := 0; i < workerCount; i++ {
+        go func() {
+            t := <-tasks
+            results <- handle(t) // 一人一个坑位,  所以不会阻塞
+        }()
+    }
+    
+    var out []int
+    for i := 0; i < workerCount; i++ {
+        out = append(out, <-results)
+    }
+    return out
 }
 ```
 
@@ -218,19 +218,19 @@ Most interactive programs have to return a response within a certain amount of t
 
 ```go
 func timeLimit(doSomeWork func() (int, error)) (int, error) {
-	var result int
-	var err error
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		result, err = doSomeWork()
-	}()
-	select {
-	case <-done:
-		return result, err
-	case <-time.After(2 * time.Second):
-		return 0, errors.New("timeout")
-	}
+    var result int
+    var err error
+    done := make(chan struct{})
+    go func() {
+        defer close(done)
+        result, err = doSomeWork()
+    }()
+    select {
+    case <-done:
+        return result, err
+    case <-time.After(2 * time.Second):
+        return 0, errors.New("timeout")
+    }
 }
 ```
 
@@ -242,34 +242,34 @@ If we exit `timeLimit` before the goroutine finishes processing, the goroutine c
 
 ```go
 func 用_Context_支持取消() {
-	startSomeWork := func(ctx context.Context) error {
-		done := make(chan struct{})
-		go func() {
-			defer close(done)
-			for i := 1; i <= 5; i++ {
-				select {
-				// ctx.Done() 返回一个 channel,  当 ctx 被取消时这个 channel 会被关闭
-				case <-ctx.Done():
-					fmt.Println("任务被取消了")
-					return
-				default:
-					time.Sleep(time.Second) // 总共要 5 秒才能完成任务
-					fmt.Printf("进度: %d\n", i*20)
-				}
-			}
-			fmt.Println("任务完成")
-		}()
-		<-done
-		return ctx.Err()
-	}
+    startSomeWork := func(ctx context.Context) error {
+        done := make(chan struct{})
+        go func() {
+            defer close(done)
+            for i := 1; i <= 5; i++ {
+                select {
+                // ctx.Done() 返回一个 channel,  当 ctx 被取消时这个 channel 会被关闭
+                case <-ctx.Done():
+                    fmt.Println("任务被取消了")
+                    return
+                default:
+                    time.Sleep(time.Second) // 总共要 5 秒才能完成任务
+                    fmt.Printf("进度: %d\n", i*20)
+                }
+            }
+            fmt.Println("任务完成")
+        }()
+        <-done
+        return ctx.Err()
+    }
 
-	// 可以手动 cancel() 提前取消, 注意 defer cancel() 是个好习惯,
-	// 既能确保 cancel() 至少被调用一次,  也能确保相关资源被尽早释放 (不必等到 timeout 才释放)
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+    // 可以手动 cancel() 提前取消, 注意 defer cancel() 是个好习惯,
+    // 既能确保 cancel() 至少被调用一次,  也能确保相关资源被尽早释放 (不必等到 timeout 才释放)
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
 
-	err := startSomeWork(ctx) // 一个函数若想支持取消,  则把 context.Context 作为第一个参数
-	fmt.Println("error:", err)
+    err := startSomeWork(ctx) // 一个函数若想支持取消,  则把 context.Context 作为第一个参数
+    fmt.Println("error:", err)
 }
 ```
 
@@ -282,12 +282,12 @@ var parser SlowComplicatedParser
 var once sync.Once
 
 func Parse(dataToParse string) string {
-	// Parse 函数会被调用多次,  但只有首次会执行初始化
-	// 不会出现两个 goroutine 同时执行初始化,  详见 Do 的文档
-	once.Do(func() {
-		parser = initParser()
-	})
-	return parser.Parse(dataToParse)
+    // Parse 函数会被调用多次,  但只有首次会执行初始化
+    // 不会出现两个 goroutine 同时执行初始化,  详见 Do 的文档
+    once.Do(func() {
+        parser = initParser()
+    })
+    return parser.Parse(dataToParse)
 }
 ```
 
@@ -319,62 +319,62 @@ That said, sometimes it is clearer to use a mutex, and the Go standard library i
 
 ```go
 func main() {
-	m, cancel := NewConcurrentMap1()
-	m.Update("ichigo", 18)
-	m.Update("rukia", 233)
-	fmt.Println(m.Read("rukia"))
-	cancel()
+    m, cancel := NewConcurrentMap1()
+    m.Update("ichigo", 18)
+    m.Update("rukia", 233)
+    fmt.Println(m.Read("rukia"))
+    cancel()
 }
 
 // 使用 chan func 作为底层类型,  channel 中存储的是函数
 type ConcurrentMap1 chan func(map[string]int)
 
 func NewConcurrentMap1() (ConcurrentMap1, func()) {
-	ch := make(ConcurrentMap1)
-	done := make(chan struct{})
+    ch := make(ConcurrentMap1)
+    done := make(chan struct{})
 
-	// 其他 goroutine 把读或写操作封装成函数, 然后发给这个 goroutine 执行
-	// 因为对 map 的所有读写都由这一个 goroutine 执行,  也就不存在并发问题了
-	go mapManager(ch, done)
+    // 其他 goroutine 把读或写操作封装成函数, 然后发给这个 goroutine 执行
+    // 因为对 map 的所有读写都由这一个 goroutine 执行,  也就不存在并发问题了
+    go mapManager(ch, done)
 
-	// 返回的 cancel 函数用于退出上面的 manager goroutine
-	return ch, func() {
-		close(done)
-	}
+    // 返回的 cancel 函数用于退出上面的 manager goroutine
+    return ch, func() {
+        close(done)
+    }
 }
 
 func mapManager(in <-chan func(map[string]int), done <-chan struct{}) {
-	// map 只被 manager goroutine 访问,  不会与其他 goroutine 共享
-	m := map[string]int{}
-	for {
-		select {
-		case <-done:
-			return
-		case f := <-in:
-			f(m)
-		}
-	}
+    // map 只被 manager goroutine 访问,  不会与其他 goroutine 共享
+    m := map[string]int{}
+    for {
+        select {
+        case <-done:
+            return
+        case f := <-in:
+            f(m)
+        }
+    }
 }
 
 func (cm ConcurrentMap1) Update(name string, val int) {
-	cm <- func(m map[string]int) {
-		m[name] = val
-	}
+    cm <- func(m map[string]int) {
+        m[name] = val
+    }
 }
 
 func (cm ConcurrentMap1) Read(name string) (int, bool) {
-	var out int
-	var ok bool
-	done := make(chan struct{})
+    var out int
+    var ok bool
+    done := make(chan struct{})
 
-	// 本 goroutine 只负责提交函数,  真实的读取操作由 manager goroutine 执行
-	// 所以是一个异步的过程,  所以用 done channel 等读取操作执行完
-	cm <- func(m map[string]int) {
-		out, ok = m[name] // 这里把数据副本读取到本 goroutine
-		close(done)
-	}
-	<-done
-	return out, ok
+    // 本 goroutine 只负责提交函数,  真实的读取操作由 manager goroutine 执行
+    // 所以是一个异步的过程,  所以用 done channel 等读取操作执行完
+    cm <- func(m map[string]int) {
+        out, ok = m[name] // 这里把数据副本读取到本 goroutine
+        close(done)
+    }
+    <-done
+    return out, ok
 }
 ```
 
@@ -392,28 +392,28 @@ Any time you acquire a mutex lock, *you must make sure that you release the lock
 
 ```go
 type ConcurrentMap2 struct {
-	l sync.RWMutex
-	m map[string]int
+    l sync.RWMutex
+    m map[string]int
 }
 
 func NewConcurrentMap2() *ConcurrentMap2 {
-	return &ConcurrentMap2{
-		m: map[string]int{},
-		// sync.RWMutex 是值类型,  默认值就是有效的, 小心别复制锁
-	}
+    return &ConcurrentMap2{
+        m: map[string]int{},
+        // sync.RWMutex 是值类型,  默认值就是有效的, 小心别复制锁
+    }
 }
 
 func (cm *ConcurrentMap2) Update(name string, val int) {
-	cm.l.Lock()
-	defer cm.l.Unlock()
-	cm.m[name] = val
+    cm.l.Lock()
+    defer cm.l.Unlock()
+    cm.m[name] = val
 }
 
 func (cm *ConcurrentMap2) Read(name string) (int, bool) {
-	cm.l.RLock()
-	defer cm.l.RUnlock()
-	val, ok := cm.m[name]
-	return val, ok
+    cm.l.RLock()
+    defer cm.l.RUnlock()
+    val, ok := cm.m[name]
+    return val, ok
 }
 ```
 
@@ -457,15 +457,15 @@ Here’s a small example of a type that is thread-safe, but doesn’t expose tha
 
 ```go
 type Counter struct {
-	mu    sync.Mutex
-	value int
+    mu    sync.Mutex
+    value int
 }
 
 func (c *Counter) Increment() {
-	// Increment 是线程安全的,  并且把线程的同步的复杂性封装在方法里
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.value++
+    // Increment 是线程安全的,  并且把线程的同步的复杂性封装在方法里
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    c.value++
 }
 ```
 
@@ -504,26 +504,26 @@ In both cases, there must be a way code to block and wait for the goroutine to f
 
 ```go
 func main() {
-	var stop = make(chan struct{}) // tells the goroutine to stop
-	var done = make(chan struct{}) // tells us that the goroutine exited
-	go func() {
-		defer close(done)
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				fmt.Println("tick...")
-			case <-stop:
-				return
-			}
-		}
-	}()
-	go func() {
-		time.Sleep(3 * time.Second) // there must be a way to
-		close(stop)                 // signal the goroutine to stop
-	}()
-	<-done // and there must be a way to block and wait for the goroutine to finish.
+    var stop = make(chan struct{}) // tells the goroutine to stop
+    var done = make(chan struct{}) // tells us that the goroutine exited
+    go func() {
+        defer close(done)
+        ticker := time.NewTicker(time.Second)
+        defer ticker.Stop()
+        for {
+            select {
+            case <-ticker.C:
+                fmt.Println("tick...")
+            case <-stop:
+                return
+            }
+        }
+    }()
+    go func() {
+        time.Sleep(3 * time.Second) // there must be a way to
+        close(stop)                 // signal the goroutine to stop
+    }()
+    <-done // and there must be a way to block and wait for the goroutine to finish.
 }
 ```
 

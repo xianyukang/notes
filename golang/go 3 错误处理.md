@@ -53,32 +53,32 @@ Since `error` is an interface, you can define your own errors that include addit
 
 ```go
 type NotFoundError struct {
-	File string
+    File string
 }
 
 // (1) 实现 error 接口时使用 pointer receiver
 func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("file %q not found", e.File)
+    return fmt.Sprintf("file %q not found", e.File)
 }
 
 // (2) 返回错误时,  返回指针
 func Open(file string) error {
-	return &NotFoundError{File: file}
+    return &NotFoundError{File: file}
 }
 
 func main() {
-	if err := Open("abc.txt"); err != nil {
-		// (3) 接收错误时,  也使用指针,  不要用值类型 var notFound NotFoundError
-		var notFound *NotFoundError
-		if errors.As(err, &notFound) {
-			fmt.Println("not found error:", notFound.File)
-		} else {
-			panic("unknown error")
-		}
-	}
+    if err := Open("abc.txt"); err != nil {
+        // (3) 接收错误时,  也使用指针,  不要用值类型 var notFound NotFoundError
+        var notFound *NotFoundError
+        if errors.As(err, &notFound) {
+            fmt.Println("not found error:", notFound.File)
+        } else {
+            panic("unknown error")
+        }
+    }
 
-	// 这里有个坑,  (2) 和 (3) 的类型必须相同,  都是指针或者都是值
-	// 推荐 (1) 处用指针接收器,  这样 IDE 能在 (2) 和 (3) 不匹配时发出警告
+    // 这里有个坑,  (2) 和 (3) 的类型必须相同,  都是指针或者都是值
+    // 推荐 (1) 处用指针接收器,  这样 IDE 能在 (2) 和 (3) 不匹配时发出警告
 }
 ```
 
@@ -91,15 +91,15 @@ type SomeErr []string
 func (e SomeErr) Error() string { return e[0] }
 
 func HandleSomething() error {
-	var err SomeErr
-	fmt.Println(err == nil) // true
-	return err              // 返回的 error 接口为 {type: SomeErr, value: nil}
-	// return nil           // 如果想表示没有错误,  应该显式返回 nil,  若返回变量可能导致 err != nil
+    var err SomeErr
+    fmt.Println(err == nil) // true
+    return err              // 返回的 error 接口为 {type: SomeErr, value: nil}
+    // return nil           // 如果想表示没有错误,  应该显式返回 nil,  若返回变量可能导致 err != nil
 }
 
 func main() {
-	err := HandleSomething()
-	fmt.Println(err == nil) // false,  因为 type 不为空
+    err := HandleSomething()
+    fmt.Println(err == nil) // false,  因为 type 不为空
 }
 ```
 
@@ -190,10 +190,10 @@ By default, `errors.Is` uses `==` to compare each wrapped error with the specifi
 
 ```go
 func (m MyErr) Is(target error) bool {
-	if me2, ok := target.(MyErr); ok {
-		return reflect.DeepEqual(me, me2)
-	}
-	return false
+    if me2, ok := target.(MyErr); ok {
+        return reflect.DeepEqual(me, me2)
+    }
+    return false
 }
 ```
 
@@ -201,7 +201,7 @@ Another use for defining your own `Is` method is to allow comparisons against er
 
 ```go
 if errors.Is(err, ResourceErr{Resource: "Database"}) {
-	fmt.Println("The database is broken:", err)
+    fmt.Println("The database is broken:", err)
 }
 // errors.Is 如何判定两个对象的相等性?  先尝试 == 后尝试 Is,  其中一个是 true 则返回 true
 ```
@@ -323,18 +323,18 @@ By the way, this re-panic idiom changes the panic value if an actual error occur
 
 ```go
 func main() {
-	defer func() {
-		err := recover().(int)
-		fmt.Println(err + 2)
-	}()
-	defer func() {
-		err := recover()
-		// var _ = err.(string)              // 这会修改 panic value
-		if _, ok := err.(string); !ok {
-			panic(err)                       // 重新抛出原来的错误
-		}
-	}()
-	panic(123)
+    defer func() {
+        err := recover().(int)
+        fmt.Println(err + 2)
+    }()
+    defer func() {
+        err := recover()
+        // var _ = err.(string)              // 这会修改 panic value
+        if _, ok := err.(string); !ok {
+            panic(err)                       // 重新抛出原来的错误
+        }
+    }()
+    panic(123)
 }
 ```
 

@@ -30,27 +30,27 @@
 
 ```go
 func 变量声明() {
-	var a int = 10        // 最完整的写法
-	var b = 10            // 自动推断类型 or 使用默认类型
-	c := 10               // 省略 var关键字
-	var d int             // 使用零值,  不初始化
-	g, h := 10, "hello"   // 可以一次性创建多个变量,  但更建议分成两行,  可读性更好
-	res, err := xxxFunc() // only use this style when assigning multiple values returned from a function
+    var a int = 10        // 最完整的写法
+    var b = 10            // 自动推断类型 or 使用默认类型
+    c := 10               // 省略 var关键字
+    var d int             // 使用零值,  不初始化
+    g, h := 10, "hello"   // 可以一次性创建多个变量,  但更建议分成两行,  可读性更好
+    res, err := xxxFunc() // only use this style when assigning multiple values returned from a function
 
-	// 可以用 := 进行赋值. As long as there is one new variable on the left-hand side of the :=
-	m := 10
-	m, n := 30, "hello"
+    // 可以用 := 进行赋值. As long as there is one new variable on the left-hand side of the :=
+    m := 10
+    m, n := 30, "hello"
 
-	// 所以呢 := 有三种行为,  ①创建新变量  ②对现有变量赋值
-	x := 10
-	if x > 5 {
-		x := 2233      // ③在局部作用域中,  创建同名的新变量
-		fmt.Println(x) // 注意两个变量 x 只是名字相同,  但各有各的内容 (尽量避免这样的代码,  易混淆)
-	}
+    // 所以呢 := 有三种行为,  ①创建新变量  ②对现有变量赋值
+    x := 10
+    if x > 5 {
+        x := 2233      // ③在局部作用域中,  创建同名的新变量
+        fmt.Println(x) // 注意两个变量 x 只是名字相同,  但各有各的内容 (尽量避免这样的代码,  易混淆)
+    }
 
     // If you are declaring a variable at package level, 
     // you must use var because := is not legal outside of functions
-	var packageLevelVariable int
+    var packageLevelVariable int
 }
 ```
 
@@ -136,18 +136,18 @@ The most visible difference between if statements in Go and other languages is t
 ```go
 // ➤ A complete, C-style for
 for i := 0; i < 10; i++ {
-	fmt.Println(i)
+    fmt.Println(i)
 }
 
 // ➤ A condition-only for, like the while statement found in C
 for i < 100 {
-	fmt.Println(i)
-	i = i * 2
+    fmt.Println(i)
+    i = i * 2
 }
 
 // ➤ An infinite for
 for {
-	fmt.Println("Hello")
+    fmt.Println("Hello")
 }
 ```
 
@@ -165,7 +165,7 @@ for _, v := range MAP {fmt.Println(v)}         // 忽略 key
 // 字符串的 for-range 循环比较新鲜,  可以观察到 byte_offset 不是每次都加一,  因为中文字符占 3 个字节
 // 第一个返回值是 unicode 码点在 utf-8 字节数组中的偏移量,  第二个返回值是 rune 类型的 unicode 码点值
 for byte_offset, rune_value := range "abc字符串🐶!" {
-	fmt.Println(byte_offset, rune_value, string(rune_value))
+    fmt.Println(byte_offset, rune_value, string(rune_value))
 }
 ```
 
@@ -239,11 +239,11 @@ Like many languages, Go supports variadic functions. The variadic parameter must
 
 ```go
 func sum(nums ...int) int {
-	total := 0
-	for _, num := range nums {
-		total += num
-	}
-	return total
+    total := 0
+    for _, num := range nums {
+        total += num
+    }
+    return total
 }
 ```
 
@@ -253,13 +253,13 @@ Go also allows you to specify names for your return values. When you supply name
 
 ```go
 func div(a int, b int) (result int, err error) {
-	// result 和 err 变量的值就是函数的返回值
-	if b == 0 {
-		err = errors.New("dividing by zero")
-		return
-	}
-	result = a / b
-	return
+    // result 和 err 变量的值就是函数的返回值
+    if b == 0 {
+        err = errors.New("dividing by zero")
+        return
+    }
+    result = a / b
+    return
 }
 ```
 
@@ -291,18 +291,18 @@ However, there are two situations where declaring anonymous functions without as
 ```go
 // 用变量存储匿名函数
 hello := func(name string) {
-	fmt.Println("hello", name)
+    fmt.Println("hello", name)
 }
 hello("ichigo")
 
 // 常用场景: 用于启动 goroutine
 go func() {
-	fmt.Println("async task")
+    fmt.Println("async task")
 }()
 
 // 常用场景: 用于 defer 清理资源
 defer func() {
-	fmt.Println("close resource")
+    fmt.Println("close resource")
 }()
 ```
 
@@ -312,17 +312,17 @@ Functions declared inside of functions are special; they are closures. This is a
 
 ```go
 func main() {
-	count := counter()
-	count() // 打印 1
-	count() // 打印 2
+    count := counter()
+    count() // 打印 1
+    count() // 打印 2
 }
 
 func counter() func() {
-	val := 0
-	return func() {
-		val++
-		fmt.Println(val)
-	}
+    val := 0
+    return func() {
+        val++
+        fmt.Println(val)
+    }
 }
 ```
 
@@ -364,18 +364,18 @@ Deferring a call to a function such as `Close` has two advantages. First, it gua
 
 ```go
 func main() {
-	// defer 函数的参数, 比如此处的 i, 会在执行 defer 这一行时存一个快照
-	// 所以不必担心 i 的值会变,  只需考虑 i 的当前值
-	for i := 0; i < 5; i++ {
-		defer fmt.Printf("%d ", i)
-	}
+    // defer 函数的参数, 比如此处的 i, 会在执行 defer 这一行时存一个快照
+    // 所以不必担心 i 的值会变,  只需考虑 i 的当前值
+    for i := 0; i < 5; i++ {
+        defer fmt.Printf("%d ", i)
+    }
 
-	// 闭包之常见错误,  捕获一个会变的变量,  等到函数执行时 i 的值已经变成了 15
-	for i := 10; i < 15; i++ {
-		defer func() {
-			fmt.Printf("%d ", i)
-		}()
-	}
+    // 闭包之常见错误,  捕获一个会变的变量,  等到函数执行时 i 的值已经变成了 15
+    for i := 10; i < 15; i++ {
+        defer func() {
+            fmt.Printf("%d ", i)
+        }()
+    }
 }
 ```
 

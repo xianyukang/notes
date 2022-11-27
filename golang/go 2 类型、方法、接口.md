@@ -29,15 +29,15 @@
 
 ```go
 type Counter struct {
-	count int
+    count int
 }
 // (c *Counter) 是指针接收器,  通过指针能修改 count 字段
 func (c *Counter) Add() {
-	c.count++
+    c.count++
 }
 // (c Counter)  是值接收器,  无法修改 count 字段,  因为 c 是结构体的拷贝
 func (c Counter) Add2() {
-	c.count++
+    c.count++
 }
 ```
 
@@ -53,14 +53,14 @@ When a type has any pointer receiver methods, a common practice is to be consist
 
 ```go
 func main() {
-	type HasTwoAdd interface {
-		Add()
-		Add2()
-	}
-	var c Counter
-	var i HasTwoAdd
-	i = c  // 错误,  因为 c  是 value instance, 方法集只包含 Add2
-	i = &c // 正确,  因为 &c 是 pointer instance,  方法集包含两个 Add 方法
+    type HasTwoAdd interface {
+        Add()
+        Add2()
+    }
+    var c Counter
+    var i HasTwoAdd
+    i = c  // 错误,  因为 c  是 value instance, 方法集只包含 Add2
+    i = &c // 正确,  因为 &c 是 pointer instance,  方法集包含两个 Add 方法
 }
 ```
 
@@ -74,20 +74,20 @@ It's OK to call a pointer receiver method on a value as long as the value is add
 
 ```go
 func (c *Character) SayHi() {
-	fmt.Println("Hi, I am", c.Name)
+    fmt.Println("Hi, I am", c.Name)
 }
 
 func main() {
-	var c = Character{Name: "Cloud", From: "FF7", Age: 21}
-	c.SayHi()            // c 是值类型、并且 addressable
-	(&c).SayHi()         // 所以编译器会自动把上一行重写成这一行
+    var c = Character{Name: "Cloud", From: "FF7", Age: 21}
+    c.SayHi()            // c 是值类型、并且 addressable
+    (&c).SayHi()         // 所以编译器会自动把上一行重写成这一行
 
-	var foo SayHier = &c // 这里必须用 &c 取指针, 如果用 c 会编译错误
-	foo.SayHi()          // 因为 c 是值类型,  c 的方法集不包括 SayHi()
+    var foo SayHier = &c // 这里必须用 &c 取指针, 如果用 c 会编译错误
+    foo.SayHi()          // 因为 c 是值类型,  c 的方法集不包括 SayHi()
 }
 
 type SayHier interface {
-	SayHi()
+    SayHi()
 }
 ```
 
@@ -189,7 +189,7 @@ m.Work() <=> m.Employee.Work()                    // m.Work() 的 receiver 是 m
 
 ```go
 type Stringer interface {
-	String() string
+    String() string
 }
 ```
 
@@ -229,21 +229,21 @@ type WeaponFunc func() string
 func (f WeaponFunc) WeaponAbility() string { return f() }
 
 type Character struct {
-	Name   string
-	From   string
-	Age    int
-	Weapon // 嵌入一个接口
+    Name   string
+    From   string
+    Age    int
+    Weapon // 嵌入一个接口
 }
 
 func main() {
-	var dante = Character{Name: "但丁", From: "DMC", Age: 40}
-	var 魔剑但丁 = WeaponFunc(func() string { return "咿呀剑法" })
-	var 黑檀木与白象牙 = WeaponFunc(func() string { return "旋转跳跃突突突" })
+    var dante = Character{Name: "但丁", From: "DMC", Age: 40}
+    var 魔剑但丁 = WeaponFunc(func() string { return "咿呀剑法" })
+    var 黑檀木与白象牙 = WeaponFunc(func() string { return "旋转跳跃突突突" })
 
-	dante.Weapon = 魔剑但丁
-	fmt.Println(dante.WeaponAbility())
-	dante.Weapon = 黑檀木与白象牙
-	fmt.Println(dante.WeaponAbility())
+    dante.Weapon = 魔剑但丁
+    fmt.Println(dante.WeaponAbility())
+    dante.Weapon = 黑檀木与白象牙
+    fmt.Println(dante.WeaponAbility())
 }
 ```
 

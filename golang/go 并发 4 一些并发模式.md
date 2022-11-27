@@ -51,55 +51,55 @@ At times you may find yourself wanting to combine one or more done channels into
 
 ```go
 func or_channel_pattern() {
-	// or() 函数返回聚合后的 channel, 当入参中的任意一个 channel 完成时, 返回值也会完成
-	var or func(channels ...<-chan int) <-chan int
-	or = func(channels ...<-chan int) <-chan int {
+    // or() 函数返回聚合后的 channel, 当入参中的任意一个 channel 完成时, 返回值也会完成
+    var or func(channels ...<-chan int) <-chan int
+    or = func(channels ...<-chan int) <-chan int {
 
-		// 递归终止条件: channels 长度为 0 或 1
-		switch len(channels) {
-		case 0:
-			return nil
-		case 1:
-			return channels[0]
-		}
+        // 递归终止条件: channels 长度为 0 或 1
+        switch len(channels) {
+        case 0:
+            return nil
+        case 1:
+            return channels[0]
+        }
 
-		// 新开一个 goroutine 在合适的时候关闭 orDone
-		orDone := make(chan int)
-		go func() {
-			defer close(orDone)
-			switch len(channels) {
-			case 2:
-				select {
-				case <-channels[0]:
-				case <-channels[1]:
-				}
-			default:
-				select {
-				case <-channels[0]: // 当 012 任意一个 channel 完成时, 用于代表它们的 orDone 也会完成
-				case <-channels[1]: // 因为会退出当前 select, 然后执行前面声明的 defer close(orDone)
-				case <-channels[2]:
-				case <-or(append(channels[3:], orDone)...):
-					// 总之把前三个 channel 聚合成一个 orDone,  当有 1000 个 channel 时
-					// channel 之间会聚合成 orDone,  orDone 之间又会聚合成更大的 orDone
-					// 虽然层层套娃,  但任意 channel 完成时,  与之关联的 orDone 也会完成
-				}
-			}
-		}()
-		return orDone
-	}
+        // 新开一个 goroutine 在合适的时候关闭 orDone
+        orDone := make(chan int)
+        go func() {
+            defer close(orDone)
+            switch len(channels) {
+            case 2:
+                select {
+                case <-channels[0]:
+                case <-channels[1]:
+                }
+            default:
+                select {
+                case <-channels[0]: // 当 012 任意一个 channel 完成时, 用于代表它们的 orDone 也会完成
+                case <-channels[1]: // 因为会退出当前 select, 然后执行前面声明的 defer close(orDone)
+                case <-channels[2]:
+                case <-or(append(channels[3:], orDone)...):
+                    // 总之把前三个 channel 聚合成一个 orDone,  当有 1000 个 channel 时
+                    // channel 之间会聚合成 orDone,  orDone 之间又会聚合成更大的 orDone
+                    // 虽然层层套娃,  但任意 channel 完成时,  与之关联的 orDone 也会完成
+                }
+            }
+        }()
+        return orDone
+    }
 
-	sleep := func(d time.Duration) <-chan int {
-		c := make(chan int)
-		go func() {
-			defer close(c)
-			time.Sleep(d)
-		}()
-		return c
-	}
+    sleep := func(d time.Duration) <-chan int {
+        c := make(chan int)
+        go func() {
+            defer close(c)
+            time.Sleep(d)
+        }()
+        return c
+    }
 
-	start := time.Now()
-	<-or(sleep(1*time.Second), sleep(2*time.Second))
-	fmt.Printf("done after %v \n", time.Since(start))
+    start := time.Now()
+    <-or(sleep(1*time.Second), sleep(2*time.Second))
+    fmt.Printf("done after %v \n", time.Since(start))
 }
 ```
 
@@ -120,43 +120,43 @@ This is desirable because the goroutine that spawned the worker goroutine—in t
 ```go
 func error_handling() {
 
-	// 把结果和错误封装在一起
-	type Result struct {
-		Error    error
-		Response *http.Response
-	}
+    // 把结果和错误封装在一起
+    type Result struct {
+        Error    error
+        Response *http.Response
+    }
 
-	// 子 goroutine 不关心错误处理, 把响应和错误都返给父 goroutine,  让它决定怎么做
-	getUrls := func(done <-chan interface{}, urls ...string) <-chan Result {
-		results := make(chan Result)
-		go func() {
-			defer close(results)
-			for _, url := range urls {
-				var result Result
-				resp, err := http.Get(url)
-				result = Result{Error: err, Response: resp}
-				select {
-				case <-done:
-					return
-				case results <- result:
-				}
-			}
-		}()
-		return results
-	}
+    // 子 goroutine 不关心错误处理, 把响应和错误都返给父 goroutine,  让它决定怎么做
+    getUrls := func(done <-chan interface{}, urls ...string) <-chan Result {
+        results := make(chan Result)
+        go func() {
+            defer close(results)
+            for _, url := range urls {
+                var result Result
+                resp, err := http.Get(url)
+                result = Result{Error: err, Response: resp}
+                select {
+                case <-done:
+                    return
+                case results <- result:
+                }
+            }
+        }()
+        return results
+    }
 
-	// 父 goroutine 依次处理子 goroutine 传过来的 Result 结构体
-	// 父 goroutine 想怎么处理错误都行,  另外可以用 done 让子 goroutine 提前退出
-	done := make(chan interface{})
-	defer close(done)
-	urls := []string{"https://www.baidu.com", "https://badhost", "https://www.bing.com"}
-	for result := range getUrls(done, urls...) {
-		if result.Error != nil {
-			fmt.Printf("error: %v\n", result.Error)
-			continue // 如果遇到错误想提前退出把这行改成 break 就好
-		}
-		fmt.Printf("Response: %v\n", result.Response.Status)
-	}
+    // 父 goroutine 依次处理子 goroutine 传过来的 Result 结构体
+    // 父 goroutine 想怎么处理错误都行,  另外可以用 done 让子 goroutine 提前退出
+    done := make(chan interface{})
+    defer close(done)
+    urls := []string{"https://www.baidu.com", "https://badhost", "https://www.bing.com"}
+    for result := range getUrls(done, urls...) {
+        if result.Error != nil {
+            fmt.Printf("error: %v\n", result.Error)
+            continue // 如果遇到错误想提前退出把这行改成 break 就好
+        }
+        fmt.Printf("Response: %v\n", result.Response.Status)
+    }
 }
 ```
 
@@ -180,27 +180,27 @@ As mentioned previously, a stage is just something that takes data in, performs 
 ```go
 func pipeline_pattern() {
 
-	multiply := func(values []int, multiplier int) []int {
-		multipliedValues := make([]int, len(values))
-		for i, v := range values {
-			multipliedValues[i] = v * multiplier
-		}
-		return multipliedValues
-	}
+    multiply := func(values []int, multiplier int) []int {
+        multipliedValues := make([]int, len(values))
+        for i, v := range values {
+            multipliedValues[i] = v * multiplier
+        }
+        return multipliedValues
+    }
 
-	add := func(values []int, additive int) []int {
-		addedValues := make([]int, len(values))
-		for i, v := range values {
-			addedValues[i] = v + additive
-		}
-		return addedValues
-	}
+    add := func(values []int, additive int) []int {
+        addedValues := make([]int, len(values))
+        for i, v := range values {
+            addedValues[i] = v + additive
+        }
+        return addedValues
+    }
 
-	// 然后把两个 stage 结合起来, 数据依次经过 multiply 和 add 两个阶段的处理
-	ints := []int{1, 2, 3, 4}
-	for _, v := range add(multiply(ints, 2), 1) {
-		fmt.Println(v)
-	}
+    // 然后把两个 stage 结合起来, 数据依次经过 multiply 和 add 两个阶段的处理
+    ints := []int{1, 2, 3, 4}
+    for _, v := range add(multiply(ints, 2), 1) {
+        fmt.Println(v)
+    }
 }
 ```
 
@@ -211,18 +211,18 @@ Notice that for the original data to remain unaltered, each stage has to make a 
 ```go
 func stream_oriented_pipeline() {
 
-	multiply := func(value, multiplier int) int {
-		return value * multiplier
-	}
-	add := func(value, additive int) int {
-		return value + additive
-	}
+    multiply := func(value, multiplier int) int {
+        return value * multiplier
+    }
+    add := func(value, additive int) int {
+        return value + additive
+    }
 
-	// 一次处理一个数据, 数据依次经过 multiply 和 add 两个阶段的处理
-	ints := []int{1, 2, 3, 4}
-	for _, v := range ints {
-		fmt.Println(add(multiply(v, 2), 1))
-	}
+    // 一次处理一个数据, 数据依次经过 multiply 和 add 两个阶段的处理
+    ints := []int{1, 2, 3, 4}
+    for _, v := range ints {
+        fmt.Println(add(multiply(v, 2), 1))
+    }
 }
 ```
 
@@ -234,61 +234,61 @@ Channels are uniquely suited to constructing pipelines in Go because they fulfil
 
 ```go
 func 用_channel_实现_pipeline_模式() {
-	// (1) 生成数字,  并通过 channel 发给下一个阶段
-	generator := func(done <-chan interface{}, integers ...int) <-chan int {
-		intStream := make(chan int)
-		go func() {
-			defer close(intStream)
-			for _, i := range integers {
-				select {
-				case <-done: // 每一个 goroutine 都通过 done channel 确保没有泄露
-					return
-				case intStream <- i:
-				}
-			}
-		}()
-		return intStream
-	}
-	// (2) 输入和输出都是一个 channel
-	multiply := func(done <-chan interface{}, intStream <-chan int, multiplier int) <-chan int {
-		multipliedStream := make(chan int)
-		go func() {
-			defer close(multipliedStream)
-			for i := range intStream {
-				select {
-				case <-done:
-					return
-				case multipliedStream <- i * multiplier: // 真正的处理逻辑
-				}
-			}
-		}()
-		return multipliedStream
-	}
-	// (3) for-range 循环会在上游 channel 关闭时退出,  done 用于提前退出
-	add := func(done <-chan interface{}, intStream <-chan int, additive int) <-chan int {
-		addedStream := make(chan int)
-		go func() {
-			defer close(addedStream)
-			for i := range intStream {
-				select {
-				case <-done:
-					return
-				case addedStream <- i + additive:
-				}
-			}
-		}()
-		return addedStream
-	}
-	// (4) 把 generator、done、stage 等元素组合起来
-	done := make(chan interface{})
-	defer close(done)
-	intStream := generator(done, 1, 2, 3, 4)
-	pipeline := multiply(done, add(done, multiply(done, intStream, 2), 1), 2)
-	for v := range pipeline {
-		fmt.Println(v) // 如果在这里 break,  defer close(done) 确保了没有 goroutine 泄露
-	}
-	// (5) 注意每个阶段都并发执行、暂存了处理结果,  并且在等下一个阶段从我这取数据,
-	//     若不是 for v := range pipeline {...} 不断从 pipeline 中拉数据,  整个流水钱跑不起来
+    // (1) 生成数字,  并通过 channel 发给下一个阶段
+    generator := func(done <-chan interface{}, integers ...int) <-chan int {
+        intStream := make(chan int)
+        go func() {
+            defer close(intStream)
+            for _, i := range integers {
+                select {
+                case <-done: // 每一个 goroutine 都通过 done channel 确保没有泄露
+                    return
+                case intStream <- i:
+                }
+            }
+        }()
+        return intStream
+    }
+    // (2) 输入和输出都是一个 channel
+    multiply := func(done <-chan interface{}, intStream <-chan int, multiplier int) <-chan int {
+        multipliedStream := make(chan int)
+        go func() {
+            defer close(multipliedStream)
+            for i := range intStream {
+                select {
+                case <-done:
+                    return
+                case multipliedStream <- i * multiplier: // 真正的处理逻辑
+                }
+            }
+        }()
+        return multipliedStream
+    }
+    // (3) for-range 循环会在上游 channel 关闭时退出,  done 用于提前退出
+    add := func(done <-chan interface{}, intStream <-chan int, additive int) <-chan int {
+        addedStream := make(chan int)
+        go func() {
+            defer close(addedStream)
+            for i := range intStream {
+                select {
+                case <-done:
+                    return
+                case addedStream <- i + additive:
+                }
+            }
+        }()
+        return addedStream
+    }
+    // (4) 把 generator、done、stage 等元素组合起来
+    done := make(chan interface{})
+    defer close(done)
+    intStream := generator(done, 1, 2, 3, 4)
+    pipeline := multiply(done, add(done, multiply(done, intStream, 2), 1), 2)
+    for v := range pipeline {
+        fmt.Println(v) // 如果在这里 break,  defer close(done) 确保了没有 goroutine 泄露
+    }
+    // (5) 注意每个阶段都并发执行、暂存了处理结果,  并且在等下一个阶段从我这取数据,
+    //     若不是 for v := range pipeline {...} 不断从 pipeline 中拉数据,  整个流水钱跑不起来
 }
 ```
 
@@ -309,82 +309,82 @@ Because the repeat generator’s send blocks on the take stage’s receive, the 
 
 ```go
 func repeat_and_take() {
-	// This pipeline stage will call fn infinitely until you tell it to stop.
-	repeatFn := func(done <-chan interface{}, fn func() interface{}) <-chan interface{} {
-		valueStream := make(chan interface{})
-		go func() {
-			defer close(valueStream)
-			for {
-				select {
-				case <-done:
-					return
-				case valueStream <- fn():
-				}
-			}
-		}()
-		return valueStream
-	}
-	// This pipeline stage will only take the first <num> items off of its incoming valueStream and then exit.
-	take := func(done <-chan interface{}, valueStream <-chan interface{}, num int) <-chan interface{} {
-		takeStream := make(chan interface{})
-		go func() {
-			defer close(takeStream)
-			for i := 0; i < num; i++ {
-				select {
-				case <-done:
-					return
-				case takeStream <- <-valueStream:
-				}
-			}
-		}()
-		return takeStream
-	}
+    // This pipeline stage will call fn infinitely until you tell it to stop.
+    repeatFn := func(done <-chan interface{}, fn func() interface{}) <-chan interface{} {
+        valueStream := make(chan interface{})
+        go func() {
+            defer close(valueStream)
+            for {
+                select {
+                case <-done:
+                    return
+                case valueStream <- fn():
+                }
+            }
+        }()
+        return valueStream
+    }
+    // This pipeline stage will only take the first <num> items off of its incoming valueStream and then exit.
+    take := func(done <-chan interface{}, valueStream <-chan interface{}, num int) <-chan interface{} {
+        takeStream := make(chan interface{})
+        go func() {
+            defer close(takeStream)
+            for i := 0; i < num; i++ {
+                select {
+                case <-done:
+                    return
+                case takeStream <- <-valueStream:
+                }
+            }
+        }()
+        return takeStream
+    }
 
-	// Let’s use it to generate 10 random numbers:
-	done := make(chan interface{})
-	defer close(done)
-	f := func() interface{} { return rand.Int() }
-	for num := range take(done, repeatFn(done, f), 10) {
-		fmt.Println(num)
-	}
+    // Let’s use it to generate 10 random numbers:
+    done := make(chan interface{})
+    defer close(done)
+    f := func() interface{} { return rand.Int() }
+    for num := range take(done, repeatFn(done, f), 10) {
+        fmt.Println(num)
+    }
 
-	repeat := func(done <-chan interface{}, values ...interface{}) <-chan interface{} {
-		valueStream := make(chan interface{})
-		go func() {
-			defer close(valueStream)
-			for {
-				for _, v := range values {
-					select {
-					case <-done:
-						return
-					case valueStream <- v:
-					}
-				}
-			}
-		}()
-		return valueStream
-	}
-	// Here’s a small example that introduces a toString pipeline stage.
-	toString := func(done <-chan interface{}, valueStream <-chan interface{}) <-chan string {
-		stringStream := make(chan string)
-		go func() {
-			defer close(stringStream)
-			for v := range valueStream {
-				select {
-				case <-done:
-					return
-				case stringStream <- v.(string):
-				}
-			}
-		}()
-		return stringStream
-	}
+    repeat := func(done <-chan interface{}, values ...interface{}) <-chan interface{} {
+        valueStream := make(chan interface{})
+        go func() {
+            defer close(valueStream)
+            for {
+                for _, v := range values {
+                    select {
+                    case <-done:
+                        return
+                    case valueStream <- v:
+                    }
+                }
+            }
+        }()
+        return valueStream
+    }
+    // Here’s a small example that introduces a toString pipeline stage.
+    toString := func(done <-chan interface{}, valueStream <-chan interface{}) <-chan string {
+        stringStream := make(chan string)
+        go func() {
+            defer close(stringStream)
+            for v := range valueStream {
+                select {
+                case <-done:
+                    return
+                case stringStream <- v.(string):
+                }
+            }
+        }()
+        return stringStream
+    }
 
-	var message string
-	for token := range toString(done, take(done, repeat(done, "I", "am."), 5)) {
-		message += token
-	}
-	fmt.Printf("message: %s...", message)
+    var message string
+    for token := range toString(done, take(done, repeat(done, "I", "am."), 5)) {
+        message += token
+    }
+    fmt.Printf("message: %s...", message)
 }
 ```
 
@@ -404,77 +404,77 @@ In fact, it turns out it can, and this pattern has a name: fan-out, fan-in. Fan-
 
 ```go
 func fan_out_fan_in() {
-	numCPU := runtime.NumCPU()
-	generator := func(done <-chan interface{}, urls ...string) <-chan string {
-		urlStream := make(chan string)
-		go func() {
-			defer close(urlStream)
-			for _, i := range urls {
-				select {
-				case <-done:
-					return
-				case urlStream <- i:
-				}
-			}
-		}()
-		return urlStream
-	}
-	getUrl := func(done <-chan interface{}, input <-chan string) <-chan string {
-		output := make(chan string)
-		go func() {
-			defer close(output)
-			for url := range input {
-				select {
-				case <-done:
-					return
-				case output <- get1024Bytes(url):
-				}
-			}
-		}()
-		return output
-	}
+    numCPU := runtime.NumCPU()
+    generator := func(done <-chan interface{}, urls ...string) <-chan string {
+        urlStream := make(chan string)
+        go func() {
+            defer close(urlStream)
+            for _, i := range urls {
+                select {
+                case <-done:
+                    return
+                case urlStream <- i:
+                }
+            }
+        }()
+        return urlStream
+    }
+    getUrl := func(done <-chan interface{}, input <-chan string) <-chan string {
+        output := make(chan string)
+        go func() {
+            defer close(output)
+            for url := range input {
+                select {
+                case <-done:
+                    return
+                case output <- get1024Bytes(url):
+                }
+            }
+        }()
+        return output
+    }
 
-	done := make(chan interface{})
-	defer close(done)
-	urlStream := generator(done, "https://baidu.com", "https://bilibili.com", "https://zhihu.com")
+    done := make(chan interface{})
+    defer close(done)
+    urlStream := generator(done, "https://baidu.com", "https://bilibili.com", "https://zhihu.com")
 
-	// (1) fan-out,  多个 goroutine 从同一个 channel 拉取数据进行处理
-	channels := make([]<-chan string, numCPU)
-	for i := 0; i < numCPU; i++ {
-		channels[i] = getUrl(done, urlStream)
-	}
+    // (1) fan-out,  多个 goroutine 从同一个 channel 拉取数据进行处理
+    channels := make([]<-chan string, numCPU)
+    for i := 0; i < numCPU; i++ {
+        channels[i] = getUrl(done, urlStream)
+    }
 
-	// (2) fan-in,  把多个输出 channel 合并为一个
-	fanIn := func(done <-chan interface{}, channels ...<-chan string) <-chan string {
-		var wg sync.WaitGroup
-		wg.Add(len(channels))
-		multiplexedStream := make(chan string)
+    // (2) fan-in,  把多个输出 channel 合并为一个
+    fanIn := func(done <-chan interface{}, channels ...<-chan string) <-chan string {
+        var wg sync.WaitGroup
+        wg.Add(len(channels))
+        multiplexedStream := make(chan string)
 
-		// 为每个 channel 开一个 goroutine,  读出来然后转发到 multiplexedStream
-		multiplex := func(c <-chan string) {
-			defer wg.Done()
-			for i := range c {
-				select {
-				case <-done:
-					return
-				case multiplexedStream <- i:
-				}
-			}
-		}
-		for _, c := range channels {
-			go multiplex(c)
-		}
-		// 再开一个 goroutine 等待 wait group 完成,  完成时关掉 multiplexedStream
-		go func() {
-			wg.Wait()
-			close(multiplexedStream)
-		}()
-		return multiplexedStream
-	}
+        // 为每个 channel 开一个 goroutine,  读出来然后转发到 multiplexedStream
+        multiplex := func(c <-chan string) {
+            defer wg.Done()
+            for i := range c {
+                select {
+                case <-done:
+                    return
+                case multiplexedStream <- i:
+                }
+            }
+        }
+        for _, c := range channels {
+            go multiplex(c)
+        }
+        // 再开一个 goroutine 等待 wait group 完成,  完成时关掉 multiplexedStream
+        go func() {
+            wg.Wait()
+            close(multiplexedStream)
+        }()
+        return multiplexedStream
+    }
 
-	for v := range fanIn(done, channels...) {
-		fmt.Println("\n------->\n", v)
-	}
+    for v := range fanIn(done, channels...) {
+        fmt.Println("\n------->\n", v)
+    }
 }
 ```
 
@@ -486,39 +486,39 @@ Later, we’ll look at an example of a way to maintain order.
 
 ```go
 func the_orDone_channel(done, myChan <-chan int) {
-	// 像这样的循环,  只能等 myChan 被关闭才能退出,  不够灵活
-	for val := range myChan {
-		_ = val
-	}
+    // 像这样的循环,  只能等 myChan 被关闭才能退出,  不够灵活
+    for val := range myChan {
+        _ = val
+    }
 
-	// 有时候我们希望用 done channel 从循环提前退出,  就像这样
-	var orDone func(<-chan int, <-chan int) <-chan int
-	for val := range orDone(done, myChan) {
-		_ = val
-	}
+    // 有时候我们希望用 done channel 从循环提前退出,  就像这样
+    var orDone func(<-chan int, <-chan int) <-chan int
+    for val := range orDone(done, myChan) {
+        _ = val
+    }
 
-	// 其中 orDone 的实现如下
-	orDone = func(done, c <-chan int) <-chan int {
-		valStream := make(chan int)
-		go func() {
-			defer close(valStream)
-			for {
-				select {
-				case <-done:
-					return
-				case v, ok := <-c:
-					if ok == false {
-						return
-					}
-					select {
-					case valStream <- v:
-					case <-done:
-					}
-				}
-			}
-		}()
-		return valStream
-	}
+    // 其中 orDone 的实现如下
+    orDone = func(done, c <-chan int) <-chan int {
+        valStream := make(chan int)
+        go func() {
+            defer close(valStream)
+            for {
+                select {
+                case <-done:
+                    return
+                case v, ok := <-c:
+                    if ok == false {
+                        return
+                    }
+                    select {
+                    case valStream <- v:
+                    case <-done:
+                    }
+                }
+            }
+        }()
+        return valStream
+    }
 }
 ```
 
@@ -530,36 +530,36 @@ You can pass it a channel to read from, and it will return two separate channels
 
 ```go
 func tee_channel() {
-	tee := func(done, in <-chan int) (<-chan int, <-chan int) {
-		out1 := make(chan int)
-		out2 := make(chan int)
-		go func() {
-			defer close(out1)
-			defer close(out2)
-			for val := range orDone(done, in) {
-				var out1, out2 = out1, out2 // 创建同名的局部变量,  初始值为外部变量
-				for i := 0; i < 2; i++ {    // 循环两次、把同一数据发给两个 channel
-					select {
-					case <-done:
-					case out1 <- val:
-						out1 = nil // 如果第一次循环中把 out1 改成 nil
-					case out2 <- val: // 那么在第二次循环中只能往 out2 发送数据
-						out2 = nil // 因为 out1 变量已经变成了 nil
-					}
-				}
-			}
-		}()
-		return out1, out2
-	}
+    tee := func(done, in <-chan int) (<-chan int, <-chan int) {
+        out1 := make(chan int)
+        out2 := make(chan int)
+        go func() {
+            defer close(out1)
+            defer close(out2)
+            for val := range orDone(done, in) {
+                var out1, out2 = out1, out2 // 创建同名的局部变量,  初始值为外部变量
+                for i := 0; i < 2; i++ {    // 循环两次、把同一数据发给两个 channel
+                    select {
+                    case <-done:
+                    case out1 <- val:
+                        out1 = nil // 如果第一次循环中把 out1 改成 nil
+                    case out2 <- val: // 那么在第二次循环中只能往 out2 发送数据
+                        out2 = nil // 因为 out1 变量已经变成了 nil
+                    }
+                }
+            }
+        }()
+        return out1, out2
+    }
 
-	done := make(chan int)
-	defer close(done)
+    done := make(chan int)
+    defer close(done)
 
-	// 注意需要把 out1、out2 都读一次,  否则上面的两次循环会卡死
-	out1, out2 := tee(done, nil)
-	for val1 := range out1 {
-		fmt.Printf("out1: %v, out2: %v\n", val1, <-out2)
-	}
+    // 注意需要把 out1、out2 都读一次,  否则上面的两次循环会卡死
+    out1, out2 := tee(done, nil)
+    for val1 := range out1 {
+        fmt.Printf("out1: %v, out2: %v\n", val1, <-out2)
+    }
 }
 ```
 
@@ -570,40 +570,40 @@ func tee_channel() {
 
 ```go
 func a_channel_of_channels() {
-	bridge := func(done <-chan int, chanStream <-chan <-chan int) <-chan int {
-		valStream := make(chan int)
-		go func() {
-			defer close(valStream)
-			for {
-				// 从 chanStream 取一个 channel
-				var stream <-chan int
-				select {
-				case maybeStream, ok := <-chanStream:
-					if ok == false {
-						return
-					}
-					stream = maybeStream
-				case <-done:
-					return
-				}
-				// 然后等处理完这个 channel,  又会从 chanStream 取一个新的 channel
-				for val := range orDone(done, stream) {
-					select {
-					case valStream <- val:
-					case <-done:
-					}
-				}
-			}
-		}()
-		return valStream
-	}
+    bridge := func(done <-chan int, chanStream <-chan <-chan int) <-chan int {
+        valStream := make(chan int)
+        go func() {
+            defer close(valStream)
+            for {
+                // 从 chanStream 取一个 channel
+                var stream <-chan int
+                select {
+                case maybeStream, ok := <-chanStream:
+                    if ok == false {
+                        return
+                    }
+                    stream = maybeStream
+                case <-done:
+                    return
+                }
+                // 然后等处理完这个 channel,  又会从 chanStream 取一个新的 channel
+                for val := range orDone(done, stream) {
+                    select {
+                    case valStream <- val:
+                    case <-done:
+                    }
+                }
+            }
+        }()
+        return valStream
+    }
 
-	// bridge 函数的好处是消费者不必处理 <-chan int 类型,  而是处理更简单的 int 类型
-	var channelChannels <-chan <-chan int
-	valStream := bridge(nil, channelChannels)
-	for val := range valStream {
-		fmt.Println(val + 100)
-	}
+    // bridge 函数的好处是消费者不必处理 <-chan int 类型,  而是处理更简单的 int 类型
+    var channelChannels <-chan <-chan int
+    valStream := bridge(nil, channelChannels)
+    for val := range valStream {
+        fmt.Println(val + 100)
+    }
 }
 ```
 
@@ -650,45 +650,45 @@ A heartbeat is a way to signal to its listeners that everything is well. There a
 
 ```go
 func 如何产生心跳(done <-chan int, pulseInterval time.Duration) (<-chan int, <-chan time.Time) {
-	heartbeat := make(chan int)
-	results := make(chan time.Time)
-	go func() {
-		defer close(heartbeat)
-		defer close(results)
-		pulse := time.Tick(pulseInterval)
-		workGen := time.Tick(2 * pulseInterval)
-		sendPulse := func() {
-			select {
-			case heartbeat <- 123:
-			default: // 发送心跳是非阻塞的,  没人接收时会丢弃这次心跳
-			}
-		}
-		sendResult := func(r time.Time) {
-			for {
-				select {
-				case <-done:
-					return
-				case <-pulse:
-					sendPulse() // 发送结果时也要尝试发送心跳,  别把心跳停了
-				case results <- r:
-					return
-				}
-			}
-		}
-		for {
-			select {
-			case <-done:
-				return
-			case <-pulse:
-				sendPulse() // 有心跳则发送心跳
-			case r := <-workGen:
-				sendResult(r) // 有结果则发送结果
-			}
-			time.Sleep(10 * time.Second)
-		}
-	}()
-	// 注意心跳是在 select 语句等待时发送的,  如果 goroutine 一直在执行计算、就没机会发送心跳
-	return heartbeat, results
+    heartbeat := make(chan int)
+    results := make(chan time.Time)
+    go func() {
+        defer close(heartbeat)
+        defer close(results)
+        pulse := time.Tick(pulseInterval)
+        workGen := time.Tick(2 * pulseInterval)
+        sendPulse := func() {
+            select {
+            case heartbeat <- 123:
+            default: // 发送心跳是非阻塞的,  没人接收时会丢弃这次心跳
+            }
+        }
+        sendResult := func(r time.Time) {
+            for {
+                select {
+                case <-done:
+                    return
+                case <-pulse:
+                    sendPulse() // 发送结果时也要尝试发送心跳,  别把心跳停了
+                case results <- r:
+                    return
+                }
+            }
+        }
+        for {
+            select {
+            case <-done:
+                return
+            case <-pulse:
+                sendPulse() // 有心跳则发送心跳
+            case r := <-workGen:
+                sendResult(r) // 有结果则发送结果
+            }
+            time.Sleep(10 * time.Second)
+        }
+    }()
+    // 注意心跳是在 select 语句等待时发送的,  如果 goroutine 一直在执行计算、就没机会发送心跳
+    return heartbeat, results
 }
 ```
 
@@ -696,30 +696,30 @@ Notice that because we might be sending out multiple pulses while we wait for in
 
 ```go
 func 如何使用心跳() {
-	done := make(chan int)
-	time.AfterFunc(10*time.Second, func() { close(done) }) // 本协程最多 10 秒后关闭
-	const timeout = 2 * time.Second
-	heartbeat, results := 如何产生心跳(done, timeout/2)
+    done := make(chan int)
+    time.AfterFunc(10*time.Second, func() { close(done) }) // 本协程最多 10 秒后关闭
+    const timeout = 2 * time.Second
+    heartbeat, results := 如何产生心跳(done, timeout/2)
 
-	for {
-		select {
-		case _, ok := <-heartbeat:
-			if ok == false {
-				return
-			}
-			fmt.Println("pulse")
-		case r, ok := <-results:
-			if ok == false {
-				return
-			}
-			fmt.Printf("results %v\n", r.Second())
-		case <-time.After(timeout):
-			// 已知每隔一秒产生一次心跳, 这里两秒过去了但还是没有心跳
-			// 可以判定 worker goroutine 出问题了,  比如死锁、忘了关闭 channel 之类的
-			fmt.Println("worker goroutine is not healthy!")
-			return
-		}
-	}
+    for {
+        select {
+        case _, ok := <-heartbeat:
+            if ok == false {
+                return
+            }
+            fmt.Println("pulse")
+        case r, ok := <-results:
+            if ok == false {
+                return
+            }
+            fmt.Printf("results %v\n", r.Second())
+        case <-time.After(timeout):
+            // 已知每隔一秒产生一次心跳, 这里两秒过去了但还是没有心跳
+            // 可以判定 worker goroutine 出问题了,  比如死锁、忘了关闭 channel 之类的
+            fmt.Println("worker goroutine is not healthy!")
+            return
+        }
+    }
 }
 ```
 
@@ -752,47 +752,47 @@ Another technique that can be implemented with a buffered channel is backpressur
 
 ```go
 func 用_buffered_channel_限制并发数() {
-	pg := New(10)
-	wg := sync.WaitGroup{}
-	wg.Add(20)
-	for i := 0; i < 20; i++ {
-		i := i
-		go func() {
-			defer wg.Done()
-			err := pg.Process(func() {
-				fmt.Println("处理", i)
-			})
-			if err != nil {
-				fmt.Println(err)
-			}
-		}()
-	}
-	wg.Wait()
+    pg := New(10)
+    wg := sync.WaitGroup{}
+    wg.Add(20)
+    for i := 0; i < 20; i++ {
+        i := i
+        go func() {
+            defer wg.Done()
+            err := pg.Process(func() {
+                fmt.Println("处理", i)
+            })
+            if err != nil {
+                fmt.Println(err)
+            }
+        }()
+    }
+    wg.Wait()
 }
 
 type PressureGauge struct {
-	ch chan struct{} // 当 channel 中的数据类型不重要时,  使用 struct{}
+    ch chan struct{} // 当 channel 中的数据类型不重要时,  使用 struct{}
 }
 
 func New(limit int) *PressureGauge {
-	ch := make(chan struct{}, limit)
-	for i := 0; i < limit; i++ {
-		ch <- struct{}{}
-	}
-	return &PressureGauge{
-		ch: ch,
-	}
+    ch := make(chan struct{}, limit)
+    for i := 0; i < limit; i++ {
+        ch <- struct{}{}
+    }
+    return &PressureGauge{
+        ch: ch,
+    }
 }
 
 func (pg *PressureGauge) Process(f func()) error {
-	select {
-	case <-pg.ch: // 取一张执行凭据,  用完了再放回去
-		f()
-		pg.ch <- struct{}{}
-		return nil
-	default: // 总共就 10 个凭据,  所以限制了最大并发数为 10
-		return errors.New("no more capacity")
-	}
+    select {
+    case <-pg.ch: // 取一张执行凭据,  用完了再放回去
+        f()
+        pg.ch <- struct{}{}
+        return nil
+    default: // 总共就 10 个凭据,  所以限制了最大并发数为 10
+        return errors.New("no more capacity")
+    }
 }
 ```
 
@@ -813,136 +813,136 @@ By structuring our code with goroutines, channels, and select statements, we sep
 
 ```go
 func main() {
-	// We have a function that calls three web services. We send data to two of those services,
-	// and then take the results of those two calls and send them to the third, returning the result.
-	// The entire process must take less than 50 milliseconds, or an error is returned.
-	result, err := GatherAndProcess(context.Background(), Input{})
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(result)
+    // We have a function that calls three web services. We send data to two of those services,
+    // and then take the results of those two calls and send them to the third, returning the result.
+    // The entire process must take less than 50 milliseconds, or an error is returned.
+    result, err := GatherAndProcess(context.Background(), Input{})
+    if err != nil {
+        fmt.Println(err)
+    }
+    fmt.Println(result)
 }
 
 func GatherAndProcess(ctx context.Context, data Input) (COut, error) {
-	// The first thing we do is set up a context that times out in 50 milliseconds.
-	// After we create the context, we use a defer to make sure the context’s cancel
-	// function is called.  You must call this function or resources leak.
-	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
-	defer cancel()
+    // The first thing we do is set up a context that times out in 50 milliseconds.
+    // After we create the context, we use a defer to make sure the context’s cancel
+    // function is called.  You must call this function or resources leak.
+    ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
+    defer cancel()
 
-	// Every channel is buffered, so that the goroutines that write to them can exit after
-	// writing without waiting for a read to happen. (The errs channel has a buffer size of two,
-	// because it could potentially have two errors written to it.)
-	p := processor{
-		outA: make(chan AOut, 1),
-		outB: make(chan BOut, 1),
-		inC:  make(chan CIn, 1),
-		outC: make(chan COut, 1),
-		errs: make(chan error, 2),
-	}
+    // Every channel is buffered, so that the goroutines that write to them can exit after
+    // writing without waiting for a read to happen. (The errs channel has a buffer size of two,
+    // because it could potentially have two errors written to it.)
+    p := processor{
+        outA: make(chan AOut, 1),
+        outB: make(chan BOut, 1),
+        inC:  make(chan CIn, 1),
+        outC: make(chan COut, 1),
+        errs: make(chan error, 2),
+    }
 
-	// Next, we call the launch method on processor to start three goroutines: one to call
-	// getResultA, one to call getResultB, and one to call getResultC:
-	p.launch(ctx, data)
+    // Next, we call the launch method on processor to start three goroutines: one to call
+    // getResultA, one to call getResultB, and one to call getResultC:
+    p.launch(ctx, data)
 
-	// After the goroutines are launched, we call the waitForAB method on processor:
-	inputC, err := p.waitForAB(ctx)
+    // After the goroutines are launched, we call the waitForAB method on processor:
+    inputC, err := p.waitForAB(ctx)
 
-	// We perform a standard nil check on the error.
-	if err != nil {
-		return COut{}, err
-	}
+    // We perform a standard nil check on the error.
+    if err != nil {
+        return COut{}, err
+    }
 
-	// If all is well, we write the inputC value to the p.inC
-	// channel and then call the waitForC method on processor:
-	p.inC <- inputC
-	out, err := p.waitForC(ctx)
-	return out, err
+    // If all is well, we write the inputC value to the p.inC
+    // channel and then call the waitForC method on processor:
+    p.inC <- inputC
+    out, err := p.waitForC(ctx)
+    return out, err
 }
 
 type processor struct {
-	outA chan AOut
-	outB chan BOut
-	outC chan COut
-	inC  chan CIn
-	errs chan error
+    outA chan AOut
+    outB chan BOut
+    outC chan COut
+    inC  chan CIn
+    errs chan error
 }
 
 func (p *processor) launch(ctx context.Context, data Input) {
-	// The goroutines for getResultA and getResultB are very similar. They call their
-	// respective methods. If an error is returned, they write the error to the p.errs channel.
-	// If a valid value is returned, they write the value to their channels.
-	go func() {
-		aOut, err := getResultA(ctx, data.A)
-		if err != nil {
-			p.errs <- err
-			return
-		}
-		p.outA <- aOut
-	}()
-	go func() {
-		bOut, err := getResultB(ctx, data.B)
-		if err != nil {
-			p.errs <- err
-			return
-		}
-		p.outB <- bOut
-	}()
+    // The goroutines for getResultA and getResultB are very similar. They call their
+    // respective methods. If an error is returned, they write the error to the p.errs channel.
+    // If a valid value is returned, they write the value to their channels.
+    go func() {
+        aOut, err := getResultA(ctx, data.A)
+        if err != nil {
+            p.errs <- err
+            return
+        }
+        p.outA <- aOut
+    }()
+    go func() {
+        bOut, err := getResultB(ctx, data.B)
+        if err != nil {
+            p.errs <- err
+            return
+        }
+        p.outB <- bOut
+    }()
 
-	// Since the call to getResultC only happens if the calls to getResultA and getResultB
-	// succeed and happen within 50 milliseconds, the third goroutine is slightly more complicated.
-	go func() {
-		select {
-		// The first is triggered if the context is canceled.
-		case <-ctx.Done():
-			return
-		// The second is triggered if the data for the call to getResultC is available.
-		case inputC := <-p.inC:
-			cOut, err := getResultC(ctx, inputC)
-			if err != nil {
-				p.errs <- err
-				return
-			}
-			p.outC <- cOut
-		}
-	}()
+    // Since the call to getResultC only happens if the calls to getResultA and getResultB
+    // succeed and happen within 50 milliseconds, the third goroutine is slightly more complicated.
+    go func() {
+        select {
+        // The first is triggered if the context is canceled.
+        case <-ctx.Done():
+            return
+        // The second is triggered if the data for the call to getResultC is available.
+        case inputC := <-p.inC:
+            cOut, err := getResultC(ctx, inputC)
+            if err != nil {
+                p.errs <- err
+                return
+            }
+            p.outC <- cOut
+        }
+    }()
 }
 
 func (p *processor) waitForAB(ctx context.Context) (CIn, error) {
-	var inputC CIn
-	count := 0
-	// This uses a for-select loop to populate inputC.
-	for count < 2 {
-		select {
-		case a := <-p.outA:
-			inputC.A = a
-			count++
-		case b := <-p.outB:
-			inputC.B = b
-			count++
-		case err := <-p.errs:
-			// If an error was written to the p.errs channel, we return the error.
-			return CIn{}, err
-		case <-ctx.Done():
-			// If the context has been canceled, we return an error to indicate the request is canceled.
-			return CIn{}, ctx.Err()
-		}
-	}
-	return inputC, nil
+    var inputC CIn
+    count := 0
+    // This uses a for-select loop to populate inputC.
+    for count < 2 {
+        select {
+        case a := <-p.outA:
+            inputC.A = a
+            count++
+        case b := <-p.outB:
+            inputC.B = b
+            count++
+        case err := <-p.errs:
+            // If an error was written to the p.errs channel, we return the error.
+            return CIn{}, err
+        case <-ctx.Done():
+            // If the context has been canceled, we return an error to indicate the request is canceled.
+            return CIn{}, ctx.Err()
+        }
+    }
+    return inputC, nil
 }
 
 func (p *processor) waitForC(ctx context.Context) (COut, error) {
-	select {
-	case out := <-p.outC:
-		// If getResultC completed successfully, we read its output from the p.outC channel and return it.
-		return out, nil
-	case err := <-p.errs:
-		// If getResultC returned an error, we read the error from the p.errs channel and return it.
-		return COut{}, err
-	case <-ctx.Done():
-		// Finally, if the context has been canceled, we return an error to indicate that.
-		return COut{}, ctx.Err()
-	}
+    select {
+    case out := <-p.outC:
+        // If getResultC completed successfully, we read its output from the p.outC channel and return it.
+        return out, nil
+    case err := <-p.errs:
+        // If getResultC returned an error, we read the error from the p.errs channel and return it.
+        return COut{}, err
+    case <-ctx.Done():
+        // Finally, if the context has been canceled, we return an error to indicate that.
+        return COut{}, ctx.Err()
+    }
 }
 
 type AOut struct{}
@@ -950,13 +950,13 @@ type BOut struct{}
 type COut struct{}
 
 type Input struct {
-	A struct{}
-	B struct{}
+    A struct{}
+    B struct{}
 }
 
 type CIn struct {
-	A AOut
-	B BOut
+    A AOut
+    B BOut
 }
 
 func getResultA(_ context.Context, _ struct{}) (AOut, error) { return AOut{}, nil }

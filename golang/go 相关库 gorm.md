@@ -77,10 +77,10 @@ go get -u gorm.io/driver/mysql
 import gormMySql "gorm.io/driver/mysql"
 dsn := "root:password@tcp(localhost)/snippetbox?charset=utf8mb4&parseTime=True&loc=Local"
 db, err := gorm.Open(gormMySql.Open(dsn), &gorm.Config{
-	Logger: logger.Default.LogMode(logger.Info),
+    Logger: logger.Default.LogMode(logger.Info),
 })
 if err != nil {
-	panic("failed to connect database")
+    panic("failed to connect database")
 }
 ```
 
@@ -150,17 +150,17 @@ type Product struct {
 
 ```go
 func GORM配置() {
-	var err error
-	dsn := "root:password@tcp(localhost)/snippetbox?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info), // 日志级别
-		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   "",   // 不加前缀
-			SingularTable: true, // 单数表名
-		},
-		DisableForeignKeyConstraintWhenMigrating: true, // 创建表时禁用外键约束
-	})
-	CheckError(err)
+    var err error
+    dsn := "root:password@tcp(localhost)/snippetbox?charset=utf8mb4&parseTime=True&loc=Local"
+    db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+        Logger: logger.Default.LogMode(logger.Info), // 日志级别
+        NamingStrategy: schema.NamingStrategy{
+            TablePrefix:   "",   // 不加前缀
+            SingularTable: true, // 单数表名
+        },
+        DisableForeignKeyConstraintWhenMigrating: true, // 创建表时禁用外键约束
+    })
+    CheckError(err)
 }
 ```
 
@@ -192,21 +192,21 @@ GORM prefers convention over configuration. By default, GORM uses `ID` as primar
 
 ```go
 type Character struct {
-	gorm.Model                          // 嵌入 ID、CreatedAt、UpdatedAt、DeletedAt 等三个字段
-	Age        uint8  `gorm:"not null"` // 如果用 int 对应到数据库则是 bigint,  有点浪费
-	Name       string `gorm:"size:191"` // 注意设置 varchar(191),  否则默认是 longtext 类型
-	From       string `gorm:"size:191"`
+    gorm.Model                          // 嵌入 ID、CreatedAt、UpdatedAt、DeletedAt 等三个字段
+    Age        uint8  `gorm:"not null"` // 如果用 int 对应到数据库则是 bigint,  有点浪费
+    Name       string `gorm:"size:191"` // 注意设置 varchar(191),  否则默认是 longtext 类型
+    From       string `gorm:"size:191"`
 }
 
 func 创建表() {
-	_ = db.AutoMigrate(&Character{})
+    _ = db.AutoMigrate(&Character{})
 
-	// db.AutoMigrate() 能创建表或修改表定义、 另外可用 db.Migrator() 增删表、列、索引
-	_ = db.Migrator().CreateTable(&Character{})
-	fmt.Println(db.Migrator().GetTables())
+    // db.AutoMigrate() 能创建表或修改表定义、 另外可用 db.Migrator() 增删表、列、索引
+    _ = db.Migrator().CreateTable(&Character{})
+    fmt.Println(db.Migrator().GetTables())
 
-	// 一般只在开发环境使用 GORM 的建表功能,  可以这样打印 GORM 生成的 SQL
-	_ = db.Session(&gorm.Session{DryRun: true}).Debug().Migrator().CreateTable(&Character{})
+    // 一般只在开发环境使用 GORM 的建表功能,  可以这样打印 GORM 生成的 SQL
+    _ = db.Session(&gorm.Session{DryRun: true}).Debug().Migrator().CreateTable(&Character{})
 }
 
 //CREATE TABLE `character`
@@ -229,28 +229,28 @@ func 创建表() {
 
 ```go
 type GormTag struct {
-	// 用 type 标签直接写 mysql 字段定义,  或者用 gorm 提供的 size/not null/default 等标签能兼容多种数据库
-	Name  string `gorm:"type:varchar(191) not null default 'a b c'"`
-	Name2 string `gorm:"size:191; not null; default:a b c"`
+    // 用 type 标签直接写 mysql 字段定义,  或者用 gorm 提供的 size/not null/default 等标签能兼容多种数据库
+    Name  string `gorm:"type:varchar(191) not null default 'a b c'"`
+    Name2 string `gorm:"size:191; not null; default:a b c"`
 
-	// 把结构体中的 author 字段映射到表中的 writer 列
-	Author string `gorm:"size:191; not null; column:writer; comment:作者"`
+    // 把结构体中的 author 字段映射到表中的 writer 列
+    Author string `gorm:"size:191; not null; column:writer; comment:作者"`
 
-	// 如果数据库 title 字段允许为 NULL,  并且想插入 NULL,  可以用指针类型 *string
-	// *string 与 sql.NullString 的区别: https://stackoverflow.com/q/40092155
-	Title  string         `gorm:"size:191; not null"`
-	Title2 *string        `gorm:"size:191"`
-	Title3 sql.NullString `gorm:"size:191"`
+    // 如果数据库 title 字段允许为 NULL,  并且想插入 NULL,  可以用指针类型 *string
+    // *string 与 sql.NullString 的区别: https://stackoverflow.com/q/40092155
+    Title  string         `gorm:"size:191; not null"`
+    Title2 *string        `gorm:"size:191"`
+    Title3 sql.NullString `gorm:"size:191"`
 }
 // DeletedAt 字段在 GORM 中约定为逻辑删除
 // 我想让字符串比较始终区分大小写、所以建表时设置了 collate utf8mb4_bin
 // 若 Query 中想让字符串区分大小写, 参考: https://dev.mysql.com/doc/refman/8.0/en/case-sensitivity.html
 type Character struct {
-	ID        uint   `gorm:"primaryKey"`
-	Name      string `gorm:"type:varchar(191) character set utf8mb4 collate utf8mb4_bin; uniqueIndex"`
-	From      string `gorm:"type:varchar(191) character set utf8mb4 collate utf8mb4_bin;"`
-	Age       uint8
-	DeletedAt gorm.DeletedAt
+    ID        uint   `gorm:"primaryKey"`
+    Name      string `gorm:"type:varchar(191) character set utf8mb4 collate utf8mb4_bin; uniqueIndex"`
+    From      string `gorm:"type:varchar(191) character set utf8mb4 collate utf8mb4_bin;"`
+    Age       uint8
+    DeletedAt gorm.DeletedAt
 }
 ```
 
@@ -262,35 +262,35 @@ type Character struct {
 
 ```go
 func 插入新记录() {
-	c := Character{
-		Name: "Homura",
-		Age:  16,
-		From: "Xenoblade 2",
-	}
-	result := db.Create(&c)
-	// 用 result.Error 检查错误
-	// 用 c.ID 获取自动生成的 ID
-	// 用 result.RowsAffected 表示插入行数
-	CheckError(result.Error)
-	fmt.Println(c.ID, result.RowsAffected)
+    c := Character{
+        Name: "Homura",
+        Age:  16,
+        From: "Xenoblade 2",
+    }
+    result := db.Create(&c)
+    // 用 result.Error 检查错误
+    // 用 c.ID 获取自动生成的 ID
+    // 用 result.RowsAffected 表示插入行数
+    CheckError(result.Error)
+    fmt.Println(c.ID, result.RowsAffected)
 }
 
 func 插入记录时选择需要的字段() {
-	c := Character{
-		Name: "Hikari",
-		Age:  16,
-		From: "Xenoblade 2",
-	}
-	// 选择 Name、From 字段、另外 CreatedAt、UpdatedAt 会被自动添加
-	// INSERT INTO `character` (`created_at`,`updated_at`,`name`,`from`) VALUES (...)
-	err := db.Select("Name", "From").Create(&c).Error
-	CheckError(err)
+    c := Character{
+        Name: "Hikari",
+        Age:  16,
+        From: "Xenoblade 2",
+    }
+    // 选择 Name、From 字段、另外 CreatedAt、UpdatedAt 会被自动添加
+    // INSERT INTO `character` (`created_at`,`updated_at`,`name`,`from`) VALUES (...)
+    err := db.Select("Name", "From").Create(&c).Error
+    CheckError(err)
 
-	// 忽略三个时间字段
-	// INSERT INTO `character` (`name`,`age`,`from`) VALUES (...)
-	c.ID = 0
-	err = db.Omit("UpdatedAt", "CreatedAt", "DeletedAt").Create(&c).Error
-	CheckError(err)
+    // 忽略三个时间字段
+    // INSERT INTO `character` (`name`,`age`,`from`) VALUES (...)
+    c.ID = 0
+    err = db.Omit("UpdatedAt", "CreatedAt", "DeletedAt").Create(&c).Error
+    CheckError(err)
 }
 ```
 
@@ -316,12 +316,12 @@ Pass slice data to method `Create`, GORM will generate a single SQL statement to
 
 ```go
 func 批量插入() {
-	characters := []Character{{Name: "Rex"}, {Name: "Homura"}, {Name: "Hikari"}}
-	err := db.Create(&characters).Error
-	CheckError(err)
-	for i := range characters {
-		fmt.Println(characters[i].ID, characters[i].Name)
-	}
+    characters := []Character{{Name: "Rex"}, {Name: "Homura"}, {Name: "Hikari"}}
+    err := db.Create(&characters).Error
+    CheckError(err)
+    for i := range characters {
+        fmt.Println(characters[i].ID, characters[i].Name)
+    }
 }
 ```
 
@@ -334,22 +334,22 @@ func 批量插入() {
 
 ```go
 func Upsert() {
-	c := Character{
-		Name: "Homura",
-		Age:  16,
-		From: "Xenoblade 2",
-	}
-	// 尝试插入新纪录,  如果违背了 name 字段的唯一索引,  则什么也不做
-	// 注意 insert into ... on duplicate key update ... 中的 insert 总会让自增列加一导致主键 id 不连续
-	result := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&c)
-	CheckError(result.Error)
-	fmt.Println(c.ID, result.RowsAffected)
+    c := Character{
+        Name: "Homura",
+        Age:  16,
+        From: "Xenoblade 2",
+    }
+    // 尝试插入新纪录,  如果违背了 name 字段的唯一索引,  则什么也不做
+    // 注意 insert into ... on duplicate key update ... 中的 insert 总会让自增列加一导致主键 id 不连续
+    result := db.Clauses(clause.OnConflict{DoNothing: true}).Create(&c)
+    CheckError(result.Error)
+    fmt.Println(c.ID, result.RowsAffected)
 
-	// 尝试插入新纪录,  如果违背了 name 字段的唯一索引,  则更新 age、from、updated_at 字段
-	columns := []string{"age", "from", "updated_at"}
-	result = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns(columns)}).Create(&c)
-	CheckError(result.Error)
-	fmt.Println(c.ID, result.RowsAffected)
+    // 尝试插入新纪录,  如果违背了 name 字段的唯一索引,  则更新 age、from、updated_at 字段
+    columns := []string{"age", "from", "updated_at"}
+    result = db.Clauses(clause.OnConflict{DoUpdates: clause.AssignmentColumns(columns)}).Create(&c)
+    CheckError(result.Error)
+    fmt.Println(c.ID, result.RowsAffected)
 }
 ```
 
@@ -357,16 +357,16 @@ func Upsert() {
 
 ```go
 func FirstOrCreate() {
-	c := Character{
-		Name: "Cloud",
-		Age:  21,
-		From: "FF7",
-	}
-	// 先用一条 sql 查询数据库有没有 name 为 Hikari 的记录,  有则用查到的数据填充 c
-	// 若没有 name 为 Hikari 的记录则执行第二条 sql,  用 c 中的数据插入一条记录
-	result := db.FirstOrCreate(&c, Character{Name: c.Name})
-	CheckError(result.Error)
-	fmt.Println(c.ID, result.RowsAffected)
+    c := Character{
+        Name: "Cloud",
+        Age:  21,
+        From: "FF7",
+    }
+    // 先用一条 sql 查询数据库有没有 name 为 Hikari 的记录,  有则用查到的数据填充 c
+    // 若没有 name 为 Hikari 的记录则执行第二条 sql,  用 c 中的数据插入一条记录
+    result := db.FirstOrCreate(&c, Character{Name: c.Name})
+    CheckError(result.Error)
+    fmt.Println(c.ID, result.RowsAffected)
 }
 // FirstOrCreate 也支持用 Assign 做插入或更新,  这与 on duplicate key update ... 的区别是使用了两条 sql
 ```
@@ -383,26 +383,26 @@ func FirstOrCreate() {
 
 ```go
 func FirstAndFind() {
-	// 按主键升序排序、First 返回第一个、Last 返回最后一个,  Take 则不排序
-	// First、Last、Take 在没有找到匹配记录时会返回 gorm.ErrRecordNotFound
-	var c Character
-	err := db.First(&c, 1).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// 不存在 id 为 1 的记录
-		} else {
-			panic(err)
-		}
-	}
-	fmt.Println(c.ID, c.Name)
+    // 按主键升序排序、First 返回第一个、Last 返回最后一个,  Take 则不排序
+    // First、Last、Take 在没有找到匹配记录时会返回 gorm.ErrRecordNotFound
+    var c Character
+    err := db.First(&c, 1).Error
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            // 不存在 id 为 1 的记录
+        } else {
+            panic(err)
+        }
+    }
+    fmt.Println(c.ID, c.Name)
 
-	// 根据主键查询多条数据, where id in (1, 2, 3)
-	cs := make([]Character, 0)
-	err = db.Find(&cs, []int{1, 2, 3}).Error
-	CheckError(err)
-	for _, c := range cs {
-		fmt.Println(c.ID, c.Name)
-	}
+    // 根据主键查询多条数据, where id in (1, 2, 3)
+    cs := make([]Character, 0)
+    err = db.Find(&cs, []int{1, 2, 3}).Error
+    CheckError(err)
+    for _, c := range cs {
+        fmt.Println(c.ID, c.Name)
+    }
 }
 ```
 
@@ -644,7 +644,7 @@ func UpdateMultiColumn() {
 
 func 批量更新() {
     // 如果传给 Model() 的结构体的主键为零值，则 GORM 会执行批量更新:
-	db.Model(&Character{}).Where("`from` = ?", "RE4").Update("from", "Resident Evil 4")
+    db.Model(&Character{}).Where("`from` = ?", "RE4").Update("from", "Resident Evil 4")
 
     // 如果在没有任何条件的情况下执行批量更新，GORM 不会执行该操作，并返回 ErrMissingWhereClause 错误
     // 对此，你必须加一些条件，或者使用原生 SQL:
@@ -711,20 +711,20 @@ func DeleteRecord() {
 
 ```go
 func RawQuery() {
-	var names []string
-	var info CharacterInfo
-	var infos []CharacterInfo
-	var count int
-	db.Raw("SELECT name FROM `character` WHERE id < ?", 100).Scan(&names)               // 扫描至字符串切片
-	db.Raw("SELECT id,name,age FROM `character` WHERE id < ?", 100).Scan(&infos)        // 扫描至结构体切片
-	db.Raw("SELECT id,name,age FROM `character` WHERE id < ? LIMIT 1", 100).Scan(&info) // 扫描至结构体
-	db.Raw("SELECT COUNT(*) FROM `character`").Scan(&count)                             // 扫描至整数
-	// Scan() 和 Find() 类似,  但 Scan() 不会触发查询钩子函数 AfterFind
+    var names []string
+    var info CharacterInfo
+    var infos []CharacterInfo
+    var count int
+    db.Raw("SELECT name FROM `character` WHERE id < ?", 100).Scan(&names)               // 扫描至字符串切片
+    db.Raw("SELECT id,name,age FROM `character` WHERE id < ?", 100).Scan(&infos)        // 扫描至结构体切片
+    db.Raw("SELECT id,name,age FROM `character` WHERE id < ? LIMIT 1", 100).Scan(&info) // 扫描至结构体
+    db.Raw("SELECT COUNT(*) FROM `character`").Scan(&count)                             // 扫描至整数
+    // Scan() 和 Find() 类似,  但 Scan() 不会触发查询钩子函数 AfterFind
 }
 
 func ExecUpdate() {
-	db.Exec("UPDATE `character` SET name = ? WHERE id IN ? AND deleted_at IS NULL", "Ichigo", []int{233, 234})
-	db.Exec("UPDATE `character` SET age = ? WHERE name = ?", gorm.Expr("age + ?", 1), "ichigo") // SET age = age + 1
+    db.Exec("UPDATE `character` SET name = ? WHERE id IN ? AND deleted_at IS NULL", "Ichigo", []int{233, 234})
+    db.Exec("UPDATE `character` SET age = ? WHERE name = ?", gorm.Expr("age + ?", 1), "ichigo") // SET age = age + 1
 }
 ```
 
@@ -758,46 +758,46 @@ func sqlRow() {
 
 ```go
 type Company struct {
-	ID   uint   `gorm:"primaryKey"`
-	Name string `gorm:"size:191"`
-	// foreignKey:CompanyID 表示 Employee 中的 CompanyID 是外键
-	// references:ID        表示 db.Create(&c) 时会把公司的 ID 值设置到 c.Employees 中的外键
-	Employees []Employee `gorm:"foreignKey:CompanyID; references:ID"`
+    ID   uint   `gorm:"primaryKey"`
+    Name string `gorm:"size:191"`
+    // foreignKey:CompanyID 表示 Employee 中的 CompanyID 是外键
+    // references:ID        表示 db.Create(&c) 时会把公司的 ID 值设置到 c.Employees 中的外键
+    Employees []Employee `gorm:"foreignKey:CompanyID; references:ID"`
 }
 
 type Employee struct {
-	ID        uint   `gorm:"primaryKey"`
-	Name      string `gorm:"size:191"`
-	CompanyID uint   // 用来做关联的 company_id
-	DeletedAt gorm.DeletedAt
+    ID        uint   `gorm:"primaryKey"`
+    Name      string `gorm:"size:191"`
+    CompanyID uint   // 用来做关联的 company_id
+    DeletedAt gorm.DeletedAt
 }
 
 func 重新建表() {
-	_ = db.Exec("DROP TABLE IF EXISTS employee,company;").Error
-	_ = db.Migrator().CreateTable(&Employee{}, &Company{})
+    _ = db.Exec("DROP TABLE IF EXISTS employee,company;").Error
+    _ = db.Migrator().CreateTable(&Employee{}, &Company{})
 }
 
 func 关联创建() {
-	db.Create(&Company{Name: "妖精的尾巴", Employees: []Employee{ // (1) 插入妖精的尾巴,  得到公司 id
-		{Name: "纳兹"}, {Name: "露西"}, {Name: "艾露莎"},         // (2) 设置 CompanyID,  然后插入三个员工
-	}})
-	db.Create(&Company{Name: "护庭十三番队", Employees: []Employee{
-		{Name: "一护"}, {Name: "露琪亚"},
-	}})
+    db.Create(&Company{Name: "妖精的尾巴", Employees: []Employee{ // (1) 插入妖精的尾巴,  得到公司 id
+        {Name: "纳兹"}, {Name: "露西"}, {Name: "艾露莎"},         // (2) 设置 CompanyID,  然后插入三个员工
+    }})
+    db.Create(&Company{Name: "护庭十三番队", Employees: []Employee{
+        {Name: "一护"}, {Name: "露琪亚"},
+    }})
 }
 
 func 关联查询() {
-	// 下面的 Preload() 会为每一个公司找到关联的员工,  会执行两条查询:
-	// (1) SELECT * FROM company WHERE id < 100
-	// (2) SELECT * FROM employee WHERE company_id IN (1,2)
-	var cs []Company
-	db.Where("id < ?", 100).Preload("Employees").Find(&cs)
+    // 下面的 Preload() 会为每一个公司找到关联的员工,  会执行两条查询:
+    // (1) SELECT * FROM company WHERE id < 100
+    // (2) SELECT * FROM employee WHERE company_id IN (1,2)
+    var cs []Company
+    db.Where("id < ?", 100).Preload("Employees").Find(&cs)
 
-	for _, c := range cs {
-		for _, e := range c.Employees {
-			fmt.Println(c.Name, e.ID, e.Name)
-		}
-	}
+    for _, c := range cs {
+        for _, e := range c.Employees {
+            fmt.Println(c.Name, e.ID, e.Name)
+        }
+    }
 }
 ```
 
@@ -815,17 +815,17 @@ type Employee struct {
 }
 
 func 带关联的查询与创建() {
-	// 查询 employee 的同时会把关联的 company 查出来:
-	// (1) SELECT * FROM employee WHERE id = 5
-	// (2) SELECT * FROM company WHERE id = 2
-	var e Employee
-	db.Preload("Company").Where("id = ?", 5).Find(&e)
-	fmt.Println(e.Name, e.Company.Name)
+    // 查询 employee 的同时会把关联的 company 查出来:
+    // (1) SELECT * FROM employee WHERE id = 5
+    // (2) SELECT * FROM company WHERE id = 2
+    var e Employee
+    db.Preload("Company").Where("id = ?", 5).Find(&e)
+    fmt.Println(e.Name, e.Company.Name)
 
-	// 创建时会先后往 company、employee 插入一行记录,  并设置好员工的 CompanyID
-	var e2 = Employee{Name: "Dante", Company: Company{Name: "恶魔五月哭"}}
-	db.Create(&e2)
-	fmt.Println(e2.Name, e2.CompanyID)
+    // 创建时会先后往 company、employee 插入一行记录,  并设置好员工的 CompanyID
+    var e2 = Employee{Name: "Dante", Company: Company{Name: "恶魔五月哭"}}
+    db.Create(&e2)
+    fmt.Println(e2.Name, e2.CompanyID)
 }
 ```
 
@@ -897,28 +897,28 @@ func 自动创建数据和关联() {
 
 ```go
 func 查找关联数据() {
-	// Preload 使用多条 SQL 查询关联数据,  比如比下面的查询要用三条 SQL
-	// 查询名为克劳德的学生、用 Preload 预加载他学过的、并且 id < 100 的课程
-	var cloud Student
-	db.Preload("Courses", "id < ?", 100).Where("name = ?", "克劳德").Find(&cloud)
-	fmt.Println(cloud.Name, cloud.Courses)
+    // Preload 使用多条 SQL 查询关联数据,  比如比下面的查询要用三条 SQL
+    // 查询名为克劳德的学生、用 Preload 预加载他学过的、并且 id < 100 的课程
+    var cloud Student
+    db.Preload("Courses", "id < ?", 100).Where("name = ?", "克劳德").Find(&cloud)
+    fmt.Println(cloud.Name, cloud.Courses)
     
-	// 假如课程 has one 老师,  预加载课程列表的同时预加载 Course 中的 Teacher 字段
-	db.Preload("Courses").Preload("Courses.Teacher").Where("name = ?", "克劳德").Find(&cloud)
+    // 假如课程 has one 老师,  预加载课程列表的同时预加载 Course 中的 Teacher 字段
+    db.Preload("Courses").Preload("Courses.Teacher").Where("name = ?", "克劳德").Find(&cloud)
 
-	// Joins 使用 employee LEFT JOIN company 加载关联数据
-	// Joins 只能用于 has one, belongs to 关系
-	var ichigo Employee
-	db.Joins("Company").Find(&ichigo, 4)
-	fmt.Println(ichigo.Name, ichigo.Company.Name)
+    // Joins 使用 employee LEFT JOIN company 加载关联数据
+    // Joins 只能用于 has one, belongs to 关系
+    var ichigo Employee
+    db.Joins("Company").Find(&ichigo, 4)
+    fmt.Println(ichigo.Name, ichigo.Company.Name)
 
-	// Association 使用 course INNER JOIN student_course ON (course_id = id AND student_id = 1)
-	var cs []Course
-	db.Model(&Student{ID: 1}).Association("Courses").Find(&cs) // 还可以加 Where() 来筛选 course
-	fmt.Println(cs)
+    // Association 使用 course INNER JOIN student_course ON (course_id = id AND student_id = 1)
+    var cs []Course
+    db.Model(&Student{ID: 1}).Association("Courses").Find(&cs) // 还可以加 Where() 来筛选 course
+    fmt.Println(cs)
 
-	// 题外话,  LEFT JOIN 中 ON 子句与 WHERE 子句的区别?
-	// https://stackoverflow.com/a/354094
+    // 题外话,  LEFT JOIN 中 ON 子句与 WHERE 子句的区别?
+    // https://stackoverflow.com/a/354094
 }
 ```
 
@@ -930,10 +930,10 @@ func 查找关联数据() {
 
 ```go
 func 添加关联数据() {
-	var c Company
-	db.First(&c, "name = ?", "妖精的尾巴")
-	err := db.Model(&c).Association("Employees").Append([]Employee{{Name: "哈比"}})
-	CheckError(err)
+    var c Company
+    db.First(&c, "name = ?", "妖精的尾巴")
+    err := db.Model(&c).Association("Employees").Append([]Employee{{Name: "哈比"}})
+    CheckError(err)
 }
 ```
 
@@ -945,20 +945,20 @@ func 添加关联数据() {
 
 ```go
 func UseContext() {
-	// 设置两秒的超时时间
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+    // 设置两秒的超时时间
+    ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+    defer cancel()
 
-	// (1) 在单个操作中使用 Context
-	var students []Student
-	db.WithContext(ctx).Find(&students)
-	fmt.Println(students)
+    // (1) 在单个操作中使用 Context
+    var students []Student
+    db.WithContext(ctx).Find(&students)
+    fmt.Println(students)
 
-	// (2) 在多个操作中使用同一 Context
-	var c Character
-	tx := db.WithContext(ctx)
-	tx.First(&c, "name = ?", "Rukia")
-	tx.Model(&c).Update("age", 150)
+    // (2) 在多个操作中使用同一 Context
+    var c Character
+    tx := db.WithContext(ctx)
+    tx.First(&c, "name = ?", "Rukia")
+    tx.Model(&c).Update("age", 150)
 }
 ```
 
@@ -970,20 +970,20 @@ func UseContext() {
 
 ```go
 func DontForgetErrorHandling() {
-	var c Character
-	// 当 First、Last、Take 方法找不到记录时，GORM 会返回 ErrRecordNotFound 错误
-	if err := db.First(&c, "name = ?", "Cloud").Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			fmt.Println("没有找到匹配的记录")
-		} else {
-			// 系统错误
-		}
-	}
+    var c Character
+    // 当 First、Last、Take 方法找不到记录时，GORM 会返回 ErrRecordNotFound 错误
+    if err := db.First(&c, "name = ?", "Cloud").Error; err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            fmt.Println("没有找到匹配的记录")
+        } else {
+            // 系统错误
+        }
+    }
 
-	// Find 的错误处理则稍微简单些
-	if result := db.Find(&c, "name = ?", "Tifa"); result.Error != nil {
-		// 系统错误
-	}
+    // Find 的错误处理则稍微简单些
+    if result := db.Find(&c, "name = ?", "Tifa"); result.Error != nil {
+        // 系统错误
+    }
 }
 ```
 
@@ -993,19 +993,19 @@ func DontForgetErrorHandling() {
 
 ```go
 func NewGormSession() {
-	// 可以用下面三个方法创建 Session
-	tx := db.Where("name = ?", "Cloud").Session(&gorm.Session{})          // gorm.Session 有若干配置项
-	tx = db.Where("name = ?", "Cloud").WithContext(context.Background())  // 设置超时时间
-	tx = db.Where("name = ?", "Cloud").Debug()                            // 把日志级别改成 Info
+    // 可以用下面三个方法创建 Session
+    tx := db.Where("name = ?", "Cloud").Session(&gorm.Session{})          // gorm.Session 有若干配置项
+    tx = db.Where("name = ?", "Cloud").WithContext(context.Background())  // 设置超时时间
+    tx = db.Where("name = ?", "Cloud").Debug()                            // 把日志级别改成 Info
 
-	var c Character
-	tx.Where("age < ?", 100).Find(&c) // name = 'Cloud' AND age < 100
-	fmt.Println(c)
+    var c Character
+    tx.Where("age < ?", 100).Find(&c) // name = 'Cloud' AND age < 100
+    fmt.Println(c)
 
-	// 下面是错误示例,  不要这么做!  db.Where() 不能复用
-	tx = db.Where("name = ?", "Cloud")
-	tx.Where("age > ?", 10).Find(&c) // 这条没问题:         name = 'Cloud' AND age > 10
-	tx.Where("age > ?", 20).Find(&c) // 这条被上一条污染了: name = 'Cloud' AND age > 10 AND age > 20 
+    // 下面是错误示例,  不要这么做!  db.Where() 不能复用
+    tx = db.Where("name = ?", "Cloud")
+    tx.Where("age > ?", 10).Find(&c) // 这条没问题:         name = 'Cloud' AND age > 10
+    tx.Where("age > ?", 20).Find(&c) // 这条被上一条污染了: name = 'Cloud' AND age > 10 AND age > 20 
 }
 ```
 
@@ -1041,19 +1041,19 @@ func NewGormSession() {
 
 ```go
 type Name struct {
-	First string
-	Last  string
+    First string
+    Last  string
 }
 
 type Student2 struct {
-	ID   uint
-	Name Name `gorm:"type:varchar(100); serializer:json"`
+    ID   uint
+    Name Name `gorm:"type:varchar(100); serializer:json"`
 }
 
 func 使用json序列化器() {
-	_ = db.AutoMigrate(&Student2{})
-	db.Create(&Student2{Name: Name{First: "里昂", Last: "肯尼迪"}})
-	// INSERT INTO `student2` (`name`) VALUES ('{"First":"里昂","Last":"肯尼迪"}')
+    _ = db.AutoMigrate(&Student2{})
+    db.Create(&Student2{Name: Name{First: "里昂", Last: "肯尼迪"}})
+    // INSERT INTO `student2` (`name`) VALUES ('{"First":"里昂","Last":"肯尼迪"}')
 }
 ```
 
@@ -1075,19 +1075,19 @@ func 使用json序列化器() {
 
 ```go
 func UseTransaction() {
-	err := db.Transaction(func(tx *gorm.DB) error {
-		// 从这里开始，应该使用 'tx' 而不是 'db'
-		if err := tx.Create(&Student{Name: "里昂"}).Error; err != nil {
-			return err // 返回任何错误都会回滚事务
-		}
-		if err := tx.Create(&Student{Name: "吉尔"}).Error; err != nil {
-			return err // 返回任何错误都会回滚事务
-		}
+    err := db.Transaction(func(tx *gorm.DB) error {
+        // 从这里开始，应该使用 'tx' 而不是 'db'
+        if err := tx.Create(&Student{Name: "里昂"}).Error; err != nil {
+            return err // 返回任何错误都会回滚事务
+        }
+        if err := tx.Create(&Student{Name: "吉尔"}).Error; err != nil {
+            return err // 返回任何错误都会回滚事务
+        }
 
-		return errors.New("haha") // 返回故意的错误, 这会导致回滚之前的插入操作
-		panic("haha panic")       // panic 也会触发回滚
-	})
-	CheckError(err) // db.Transaction() 返回事务中遇到的错误
+        return errors.New("haha") // 返回故意的错误, 这会导致回滚之前的插入操作
+        panic("haha panic")       // panic 也会触发回滚
+    })
+    CheckError(err) // db.Transaction() 返回事务中遇到的错误
 }
 ```
 
@@ -1098,26 +1098,26 @@ func UseTransaction() {
 
 ```go
 func 嵌套事务() {
-	_ = db.Transaction(func(tx *gorm.DB) error {
-		tx.Create(&Student{Name: "一护"})
+    _ = db.Transaction(func(tx *gorm.DB) error {
+        tx.Create(&Student{Name: "一护"})
 
         // SAVEPOINT 111
-		err := tx.Transaction(func(tx *gorm.DB) error {
-			tx.Create(&Student{Name: "蓝染"})
-			return errors.New("bad guy") // 在嵌套事务中回滚蓝染
-		})
-		fmt.Println(err)
+        err := tx.Transaction(func(tx *gorm.DB) error {
+            tx.Create(&Student{Name: "蓝染"})
+            return errors.New("bad guy") // 在嵌套事务中回滚蓝染
+        })
+        fmt.Println(err)
         // ROLLBACK TO SAVEPOINT 111
 
         // SAVEPOINT 222
-		_ = tx.Transaction(func(tx *gorm.DB) error {
-			tx.Create(&Student{Name: "织姬"})
-			return nil
-		})
+        _ = tx.Transaction(func(tx *gorm.DB) error {
+            tx.Create(&Student{Name: "织姬"})
+            return nil
+        })
 
-		tx.Create(&Student{Name: "露琪亚"})
-		return nil
-	})
+        tx.Create(&Student{Name: "露琪亚"})
+        return nil
+    })
 }
 ```
 
@@ -1127,22 +1127,22 @@ func 嵌套事务() {
 
 ```go
 func 手动事务() {
-	// 开始事务,  注意接下来要用 tx 而不是 db
-	tx := db.Begin()
+    // 开始事务,  注意接下来要用 tx 而不是 db
+    tx := db.Begin()
 
-	// 在事务中执行一些 db 操作
-	tx.Create(&Student{Name: "里昂"})
-	tx.Create(&Student{Name: "但丁"})
-	tx.Create(&Student{Name: "尼禄"})
+    // 在事务中执行一些 db 操作
+    tx.Create(&Student{Name: "里昂"})
+    tx.Create(&Student{Name: "但丁"})
+    tx.Create(&Student{Name: "尼禄"})
 
-	rand.Seed(time.Now().UnixNano())
-	if n := rand.Intn(2); n == 0 {
-		fmt.Println("遇到错误, 回滚")
-		tx.Rollback()
-	} else if n == 1 {
-		fmt.Println("一切正常, 提交")
-		tx.Commit()
-	}
+    rand.Seed(time.Now().UnixNano())
+    if n := rand.Intn(2); n == 0 {
+        fmt.Println("遇到错误, 回滚")
+        tx.Rollback()
+    } else if n == 1 {
+        fmt.Println("一切正常, 提交")
+        tx.Commit()
+    }
 }
 ```
 
@@ -1150,40 +1150,40 @@ func 手动事务() {
 
 ```go
 func 手动事务_完整例子() (err error) {
-	// 注意接下来要用 tx 而不是 db
-	tx := db.Begin()
+    // 注意接下来要用 tx 而不是 db
+    tx := db.Begin()
 
-	// 处理可能的 panic,  避免 panic 时忘了回滚
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			// 修改函数返回值,  避免 panic-recover 后返回 nil
-			switch r := r.(type) {
-			case error:
-				err = r
-			default:
-				err = fmt.Errorf("error: %v", r)
-			}
-		}
-	}()
+    // 处理可能的 panic,  避免 panic 时忘了回滚
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+            // 修改函数返回值,  避免 panic-recover 后返回 nil
+            switch r := r.(type) {
+            case error:
+                err = r
+            default:
+                err = fmt.Errorf("error: %v", r)
+            }
+        }
+    }()
 
-	// 开启事务也会出错吗, 官网的例子说明有这种情况
-	if err := tx.Error; err != nil {
-		return err
-	}
+    // 开启事务也会出错吗, 官网的例子说明有这种情况
+    if err := tx.Error; err != nil {
+        return err
+    }
 
-	// 执行 SQL 并检查错误,  遇到错误就回滚
-	if err := tx.Create(&Student{Name: "Cloud"}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-	if err := tx.Create(&Student{Name: "Tifa"}).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
+    // 执行 SQL 并检查错误,  遇到错误就回滚
+    if err := tx.Create(&Student{Name: "Cloud"}).Error; err != nil {
+        tx.Rollback()
+        return err
+    }
+    if err := tx.Create(&Student{Name: "Tifa"}).Error; err != nil {
+        tx.Rollback()
+        return err
+    }
 
-	// 提交事务、并返回提交时遇到的错误
-	return tx.Commit().Error
+    // 提交事务、并返回提交时遇到的错误
+    return tx.Commit().Error
 }
 ```
 

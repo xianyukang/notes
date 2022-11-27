@@ -32,15 +32,15 @@ but the program has not been written so that this order is guaranteed to be main
 
 ```go
 func main() {
-	var data int
+    var data int
 
-	go func() {
-		data++                              // 修改 data
-	}()
+    go func() {
+        data++                              // 修改 data
+    }()
 
-	if data == 0 {                          // 读取 data
-		fmt.Println("data is", data)        // 再次读取 data 
-	}
+    if data == 0 {                          // 读取 data
+        fmt.Println("data is", data)        // 再次读取 data 
+    }
 }
 ```
 
@@ -68,25 +68,25 @@ Race conditions are one of the most insidious types of concurrency bugs because 
 
 ```go
 type Counter struct {
-	mu  sync.Mutex
-	ten int
-	one int
+    mu  sync.Mutex
+    ten int
+    one int
 }
 
 func (c *Counter) Inc() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.one++
-	if c.one == 10 {
-		c.one = 0
-		c.ten++
-	}
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    c.one++
+    if c.one == 10 {
+        c.one = 0
+        c.ten++
+    }
 }
 
 func (c *Counter) Get() (int, int) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.ten, c.one
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    return c.ten, c.one
 }
 ```
 
@@ -115,22 +115,22 @@ In fact, there’s a name for a section of your program that needs exclusive acc
 
 ```go
 func 加锁保护临界区() {
-	var l sync.Mutex
-	var data int
+    var l sync.Mutex
+    var data int
 
-	go func() {
-		l.Lock() // declare exclusive access
-		data++
-		l.Unlock()
-	}()
+    go func() {
+        l.Lock() // declare exclusive access
+        data++
+        l.Unlock()
+    }()
 
-	l.Lock()     // declare exclusive access
-	if data == 0 {
-		fmt.Printf("data is %v \n", data)
-	} else {
-		fmt.Printf("data is %v \n", data)
-	}
-	l.Unlock()
+    l.Lock()     // declare exclusive access
+    if data == 0 {
+        fmt.Printf("data is %v \n", data)
+    } else {
+        fmt.Printf("data is %v \n", data)
+    }
+    l.Unlock()
 }
 ```
 

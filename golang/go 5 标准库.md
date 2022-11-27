@@ -55,17 +55,17 @@ fmt.Printf("%#v\n", c)         // prints the value in full Go syntax.
 
 ```go
 type Character struct {
-	Name string
-	From string
-	Age  int
+    Name string
+    From string
+    Age  int
 }
 func (c Character) String() string {
-	return fmt.Sprintf("(%q, %q, %v)", c.Name, c.From, c.Age)
+    return fmt.Sprintf("(%q, %q, %v)", c.Name, c.From, c.Age)
     // return fmt.Sprintf("%v", c)  // 小心无限递归,  fmt 处理 %s/%v/%q 时又会调用 String()
 }
 func main() {
-	var c = Character{Name: "Cloud", From: "FF7", Age: 21}
-	fmt.Println(c)
+    var c = Character{Name: "Cloud", From: "FF7", Age: 21}
+    fmt.Println(c)
 }
 ```
 
@@ -263,39 +263,39 @@ While JSON is probably the most commonly used encoder in the standard library, G
 
 ```go
 func main() {
-	records := [][]byte{
-		[]byte(`{"status": 200, "tag":"one"}`),
-		[]byte(`{"status":"ok", "tag":"two"}`),
-	}
+    records := [][]byte{
+        []byte(`{"status": 200, "tag":"one"}`),
+        []byte(`{"status":"ok", "tag":"two"}`),
+    }
 
-	for idx, record := range records {
-		var result struct {
-			StatusCode uint64
-			StatusName string
-			Status     json.RawMessage `json:"status"`
-			Tag        string          `json:"tag"`
-		}
+    for idx, record := range records {
+        var result struct {
+            StatusCode uint64
+            StatusName string
+            Status     json.RawMessage `json:"status"`
+            Tag        string          `json:"tag"`
+        }
 
-		// 注意 Status 字段的类型为 json.RawMessage
-		// 所谓 json.RawMessage 是个 byte slice,  表示先把数据存下来,  等下再进一步解析
-		if err := json.NewDecoder(bytes.NewReader(record)).Decode(&result); err != nil {
-			fmt.Println("error:", err)
-			return
-		}
+        // 注意 Status 字段的类型为 json.RawMessage
+        // 所谓 json.RawMessage 是个 byte slice,  表示先把数据存下来,  等下再进一步解析
+        if err := json.NewDecoder(bytes.NewReader(record)).Decode(&result); err != nil {
+            fmt.Println("error:", err)
+            return
+        }
 
-		// records 中的 status 字段可能是字符串,  也可能是数字
-		var stringStatus string
-		if err := json.Unmarshal(result.Status, &stringStatus); err == nil {
-			result.StatusName = stringStatus
-		}
+        // records 中的 status 字段可能是字符串,  也可能是数字
+        var stringStatus string
+        if err := json.Unmarshal(result.Status, &stringStatus); err == nil {
+            result.StatusName = stringStatus
+        }
 
-		var numberStatus uint64
-		if err := json.Unmarshal(result.Status, &numberStatus); err == nil {
-			result.StatusCode = numberStatus
-		}
+        var numberStatus uint64
+        if err := json.Unmarshal(result.Status, &numberStatus); err == nil {
+            result.StatusCode = numberStatus
+        }
 
-		fmt.Printf("[%v] result => %+v\n", idx, result)
-	}
+        fmt.Printf("[%v] result => %+v\n", idx, result)
+    }
 }
 ```
 
@@ -369,11 +369,11 @@ Unlike the "system" library call from C and other languages, <font color='#D05'>
 type Sequence []int
 
 func main() {
-	var s = Sequence{3, 2, 1}
-	fmt.Println(s)
-	sort.Ints(s)            // It's an idiom in Go programs to convert the type of
-	sort.IntSlice(s).Sort() // an expression to access a different set of methods.
-	fmt.Println(s)
+    var s = Sequence{3, 2, 1}
+    fmt.Println(s)
+    sort.Ints(s)            // It's an idiom in Go programs to convert the type of
+    sort.IntSlice(s).Sort() // an expression to access a different set of methods.
+    fmt.Println(s)
 }
 
 func (s Sequence) Copy() Sequence {
@@ -395,7 +395,7 @@ func (s Sequence) String() string {
 
 ```go
 sort.Slice(people, func(i, j int) bool {
-	return people[i].Age < people[j].Age
+    return people[i].Age < people[j].Age
 })
 ```
 

@@ -95,29 +95,29 @@ r := gin.Default() // Default With the Logger and Recovery middleware already at
 
 ```go
 func 使用中间件() {
-	// Creates a router without any middleware by default
-	r := gin.New()
+    // Creates a router without any middleware by default
+    r := gin.New()
 
-	// Logger middleware will write the logs to gin.DefaultWriter even if you set with GIN_MODE=release.
-	// By default, gin.DefaultWriter = os.Stdout
-	r.Use(gin.Logger())
+    // Logger middleware will write the logs to gin.DefaultWriter even if you set with GIN_MODE=release.
+    // By default, gin.DefaultWriter = os.Stdout
+    r.Use(gin.Logger())
 
-	// Recovery middleware recovers from any panics and writes a 500 if there was one.
-	r.Use(gin.Recovery())
+    // Recovery middleware recovers from any panics and writes a 500 if there was one.
+    r.Use(gin.Recovery())
 
-	// Per route middleware, you can add as many as you desire.
-	r.GET("/benchmark", MyBenchLogger(), benchEndpoint)
+    // Per route middleware, you can add as many as you desire.
+    r.GET("/benchmark", MyBenchLogger(), benchEndpoint)
 
-	// Authorization group, and per group middleware!
-	authorized := r.Group("/")
-	authorized.Use(AuthRequired())
-	{
-		authorized.POST("/submit", submitEndpoint)
-		authorized.POST("/read", readEndpoint)
+    // Authorization group, and per group middleware!
+    authorized := r.Group("/")
+    authorized.Use(AuthRequired())
+    {
+        authorized.POST("/submit", submitEndpoint)
+        authorized.POST("/read", readEndpoint)
 
-		testing := authorized.Group("testing")       // nested group
-		testing.GET("/analytics", analyticsEndpoint) // a route for /testing/analytics
-	}
+        testing := authorized.Group("testing")       // nested group
+        testing.GET("/analytics", analyticsEndpoint) // a route for /testing/analytics
+    }
 }
 ```
 
@@ -164,23 +164,23 @@ type Login struct {
 }
 
 func main() {
-	router := gin.Default()
+    router := gin.Default()
     // Example for binding JSON ({"user": "manu", "password": "123"})
-	router.POST("/loginJSON", func(c *gin.Context) {
-		var json Login
-		if err := c.ShouldBindJSON(&json); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-	})
-	// Example for binding a HTML form (user=manu&password=123)
-	router.POST("/loginForm", func(c *gin.Context) {
-		var form Login
-		// This will infer what binder to use depending on the content-type header.
-		if err := c.ShouldBind(&form); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+    router.POST("/loginJSON", func(c *gin.Context) {
+        var json Login
+        if err := c.ShouldBindJSON(&json); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+    })
+    // Example for binding a HTML form (user=manu&password=123)
+    router.POST("/loginForm", func(c *gin.Context) {
+        var form Login
+        // This will infer what binder to use depending on the content-type header.
+        if err := c.ShouldBind(&form); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
 })}
 ```
 
@@ -254,22 +254,22 @@ To catch the signals, we’ll need to spin up a background goroutine which runs 
 
 ```go
 func main() {
-	router := http.NewServeMux()
-	router.HandleFunc("/", index)
+    router := http.NewServeMux()
+    router.HandleFunc("/", index)
 
-	go func() {
-		quit := make(chan os.Signal, 1)                      // 注意大小为 1, 因为发送方是非阻塞的
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM) // 监听这两个 signal
-		s := <-quit                                          // 在此处等待,  直到收到了某个 signal
-		fmt.Println("caught signal", s.String())             // 打印收到的信号
-		os.Exit(0)                                           // 等待后台任务、清理资源、关闭服务...
-	}()
+    go func() {
+        quit := make(chan os.Signal, 1)                      // 注意大小为 1, 因为发送方是非阻塞的
+        signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM) // 监听这两个 signal
+        s := <-quit                                          // 在此处等待,  直到收到了某个 signal
+        fmt.Println("caught signal", s.String())             // 打印收到的信号
+        os.Exit(0)                                           // 等待后台任务、清理资源、关闭服务...
+    }()
 
-	_ = http.ListenAndServe("127.0.0.1:3000", router)
+    _ = http.ListenAndServe("127.0.0.1:3000", router)
 }
 
 func index(writer http.ResponseWriter, request *http.Request) {
-	_, _ = writer.Write([]byte("hello world!"))
+    _, _ = writer.Write([]byte("hello world!"))
 }
 ```
 
@@ -281,42 +281,42 @@ Intercepting the signals is all well and good, but it’s not very useful until 
 
 ```go
 func main() {
-	router := http.NewServeMux()
-	router.HandleFunc("/index", index)
-	srv := &http.Server{
-		Addr:    "127.0.0.1:3000",
-		Handler: router,
-	}
-	shutdownError := make(chan error)
-	go func() {
-		quit := make(chan os.Signal, 1)
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-		s := <-quit
-		fmt.Println("caught signal", s.String())
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		// Shutdown 可能会返回错误, 比如无法在 5 秒内关闭服务
-		shutdownError <- srv.Shutdown(ctx)
-	}()
-	// 调用 Shutdown() 会让 ListenAndServe() 立即返回 http.ErrServerClosed
-	err := srv.ListenAndServe()
-	if !errors.Is(err, http.ErrServerClosed) {
-		panic(err)
-	}
-	// 判断调用 Shutdown() 时有没有发生错误
-	err = <-shutdownError
-	if err != nil {
-		panic(err)
-	}
-	// 执行到这说明平滑关闭了服务器
-	fmt.Println("stopped server")
+    router := http.NewServeMux()
+    router.HandleFunc("/index", index)
+    srv := &http.Server{
+        Addr:    "127.0.0.1:3000",
+        Handler: router,
+    }
+    shutdownError := make(chan error)
+    go func() {
+        quit := make(chan os.Signal, 1)
+        signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+        s := <-quit
+        fmt.Println("caught signal", s.String())
+        ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+        defer cancel()
+        // Shutdown 可能会返回错误, 比如无法在 5 秒内关闭服务
+        shutdownError <- srv.Shutdown(ctx)
+    }()
+    // 调用 Shutdown() 会让 ListenAndServe() 立即返回 http.ErrServerClosed
+    err := srv.ListenAndServe()
+    if !errors.Is(err, http.ErrServerClosed) {
+        panic(err)
+    }
+    // 判断调用 Shutdown() 时有没有发生错误
+    err = <-shutdownError
+    if err != nil {
+        panic(err)
+    }
+    // 执行到这说明平滑关闭了服务器
+    fmt.Println("stopped server")
 }
 
 func index(writer http.ResponseWriter, request *http.Request) {
-	fmt.Println("处理请求中...")
-	time.Sleep(4 * time.Second) // 在处理请求时用 Ctrl+C 关闭应用,  应该能看到平滑关闭
-	_, _ = writer.Write([]byte("hello world!"))
-	fmt.Println("处理完成")
+    fmt.Println("处理请求中...")
+    time.Sleep(4 * time.Second) // 在处理请求时用 Ctrl+C 关闭应用,  应该能看到平滑关闭
+    _, _ = writer.Write([]byte("hello world!"))
+    fmt.Println("处理完成")
 }
 ```
 
@@ -352,10 +352,10 @@ func index(writer http.ResponseWriter, request *http.Request) {
 
 ```go
 func customFunc(fl validator.FieldLevel) bool {
-	if fl.Field().String() == "invalid" {
-		return false
-	}
-	return true
+    if fl.Field().String() == "invalid" {
+        return false
+    }
+    return true
 }
 // NOTES: using the same tag name as an existing function will overwrite the existing one
 validate.RegisterValidation("custom tag name", customFunc)
@@ -369,8 +369,8 @@ A regex can be used within the validator function and even be precompiled for be
 
 ```go
 type DbBackedUser struct {
-	Name sql.NullString `validate:"required"` // NullString 是个结构体,  但我们不关心它的具体结构
-	Age  sql.NullInt64  `validate:"required"` // 定义一个提取器从 NullString 中提取字符串,  就能应用各种字符串校验
+    Name sql.NullString `validate:"required"` // NullString 是个结构体,  但我们不关心它的具体结构
+    Age  sql.NullInt64  `validate:"required"` // 定义一个提取器从 NullString 中提取字符串,  就能应用各种字符串校验
 }
 ```
 

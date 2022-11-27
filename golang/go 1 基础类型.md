@@ -200,11 +200,11 @@ If you need to create a slice that’s independent of the original, use the buil
 
 ```go
 func main() {
-	a := make([]int, 3, 6)
-	b := []int{1, 1, 1}
-	c := append(a, b...) // c 与 a 共用同一底层数组
-	a[0] = 666           // 替换 a 中元素会影响到 c
-	fmt.Println(c)       // c[0] 也变成了 666
+    a := make([]int, 3, 6)
+    b := []int{1, 1, 1}
+    c := append(a, b...) // c 与 a 共用同一底层数组
+    a[0] = 666           // 替换 a 中元素会影响到 c
+    fmt.Println(c)       // c[0] 也变成了 666
 }
 ```
 
@@ -212,19 +212,19 @@ func main() {
 
 ```go
 func Append(a, b []int) []int {
-	newLen := len(a) + len(b)
-	newSlice := make([]int, newLen, newLen*2) // Allocate double what's needed, for future growth.
-	copy(newSlice, a)
-	copy(newSlice[len(a):], b)
-	return newSlice
+    newLen := len(a) + len(b)
+    newSlice := make([]int, newLen, newLen*2) // Allocate double what's needed, for future growth.
+    copy(newSlice, a)
+    copy(newSlice[len(a):], b)
+    return newSlice
 }
 
 func main() {
-	a := make([]int, 3, 6)
-	b := []int{1, 1, 1}
-	c := Append(a, b)              // c 是重新分配的
-	a[0] = 666                     //
-	fmt.Println(c, len(c), cap(c)) // c[0] 依旧是 0, 不会被 a 影响
+    a := make([]int, 3, 6)
+    b := []int{1, 1, 1}
+    c := Append(a, b)              // c 是重新分配的
+    a[0] = 666                     //
+    fmt.Println(c, len(c), cap(c)) // c[0] 依旧是 0, 不会被 a 影响
 }
 ```
 
@@ -237,18 +237,18 @@ func main() {
 ```go
 func how_strings_work_in_go() {
     // You might think that a string in Go is made out of runes, but that’s not the case. 
-	// Under the covers, Go uses a sequence of bytes to represent a string. 
-	// string 就是一个 utf-8 编码的 byte array, 中文字符占三个字节、狗头占 4 个字节
-	str := "你好🐶"
-	for i := 0; i < len(str); i++ {
-		fmt.Printf("%x ", str[i])
-	}
-	fmt.Println(str[:3])                     // 要前三个字节才能取出 '你' 这个字
-	fmt.Println(utf8.RuneCountInString(str)) // len 返回的是字节数, 计算字符 (unicode码点) 个数要这样写
+    // Under the covers, Go uses a sequence of bytes to represent a string. 
+    // string 就是一个 utf-8 编码的 byte array, 中文字符占三个字节、狗头占 4 个字节
+    str := "你好🐶"
+    for i := 0; i < len(str); i++ {
+        fmt.Printf("%x ", str[i])
+    }
+    fmt.Println(str[:3])                     // 要前三个字节才能取出 '你' 这个字
+    fmt.Println(utf8.RuneCountInString(str)) // len 返回的是字节数, 计算字符 (unicode码点) 个数要这样写
 
-	// rune 类型是 int32 的别名,  所以 rune 存储的是 unicode 码点编号，而不是字符本身，
-	// 如果你把 rune 传递给 fmt.Println，你会在输出中看到一个数字，而不是原始字符。
-	fmt.Printf("狗头的 unicode 码点: 0x%x \n", '🐶')
+    // rune 类型是 int32 的别名,  所以 rune 存储的是 unicode 码点编号，而不是字符本身，
+    // 如果你把 rune 传递给 fmt.Println，你会在输出中看到一个数字，而不是原始字符。
+    fmt.Printf("狗头的 unicode 码点: 0x%x \n", '🐶')
 }
 ```
 
@@ -468,11 +468,11 @@ If the size isn’t known, you can’t make space for it by simply moving the st
 
 ```go
 func count指针所指对象在栈上分配() *int {
-	count := new(int)
-	if count != nil {
-		fmt.Println("haha")
-	}	
-	return nil // 如果 return count 那么 new(int) 就会在堆上分配
+    count := new(int)
+    if count != nil {
+        fmt.Println("haha")
+    }    
+    return nil // 如果 return count 那么 new(int) 就会在堆上分配
 }
 ```
 

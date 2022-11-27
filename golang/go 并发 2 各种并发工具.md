@@ -80,23 +80,23 @@ WaitGroup is a great way to wait for a set of concurrent operations to complete 
 
 ```go
 func waitGroup用法() {
-	var wg sync.WaitGroup
+    var wg sync.WaitGroup
 
-	wg.Add(1)              // Add 了几就要调用几次 Done
-	go func() {
-		defer wg.Done()    // 使用 defer Done 确保函数结束时 Done 被调用
-		time.Sleep(2 * time.Second)
-		fmt.Println("joey doesn't share food!")
-	}()
+    wg.Add(1)              // Add 了几就要调用几次 Done
+    go func() {
+        defer wg.Done()    // 使用 defer Done 确保函数结束时 Done 被调用
+        time.Sleep(2 * time.Second)
+        fmt.Println("joey doesn't share food!")
+    }()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		time.Sleep(1 * time.Second)
-		fmt.Println("how you doing?")
-	}()
+    wg.Add(1)
+    go func() {
+        defer wg.Done()
+        time.Sleep(1 * time.Second)
+        fmt.Println("how you doing?")
+    }()
 
-	wg.Wait()              // 调用 Wait 进行等待
+    wg.Wait()              // 调用 Wait 进行等待
 }
 ```
 
@@ -116,27 +116,27 @@ Whereas channels share memory by communicating, a Mutex shares memory by creatin
 
 ```go
 func 用锁保护对共享内存的修改() {
-	var count int
-	var lock sync.Mutex
-	var wg sync.WaitGroup
+    var count int
+    var lock sync.Mutex
+    var wg sync.WaitGroup
 
-	add := func(delta int, useLock bool) {
-		defer wg.Done()
-		if useLock {
-			lock.Lock()         // 访问共享内存前,  加互斥锁
-			defer lock.Unlock() // 使用 defer Unlock 确保函数退出后锁会被释放,  否则可能产生死锁
-		}
+    add := func(delta int, useLock bool) {
+        defer wg.Done()
+        if useLock {
+            lock.Lock()         // 访问共享内存前,  加互斥锁
+            defer lock.Unlock() // 使用 defer Unlock 确保函数退出后锁会被释放,  否则可能产生死锁
+        }
 
-		for i := 0; i < 10_0000; i++ {
-			count += delta
-		}
-	}
+        for i := 0; i < 10_0000; i++ {
+            count += delta
+        }
+    }
 
-	wg.Add(2)
-	go add(1, true)
-	go add(-1, true)
-	wg.Wait()
-	fmt.Println(count) // 同时进行 10 万次加 1 和减 1, 如果不使用锁进行同步,  会发现结果并不是 0
+    wg.Add(2)
+    go add(1, true)
+    go add(-1, true)
+    wg.Wait()
+    fmt.Println(count) // 同时进行 10 万次加 1 和减 1, 如果不使用锁进行同步,  会发现结果并不是 0
 } 
 ```
 
@@ -148,39 +148,39 @@ The `sync.RWMutex` is conceptually the same thing as a Mutex: it guards access t
 
 ```go
 func 使用读写锁() {
-	var data int
-	var wg sync.WaitGroup
-	wg.Add(4)
+    var data int
+    var wg sync.WaitGroup
+    wg.Add(4)
 
-	reader := func(lock sync.Locker) {
-		defer wg.Done()
-		lock.Lock()
-		defer lock.Unlock()
+    reader := func(lock sync.Locker) {
+        defer wg.Done()
+        lock.Lock()
+        defer lock.Unlock()
 
-		fmt.Println("----------------------> 获取读锁")
-		fmt.Printf("data is %v \n", data)
-		time.Sleep(2 * time.Second)
-		fmt.Println("----------------------> 释放读锁")
-	}
+        fmt.Println("----------------------> 获取读锁")
+        fmt.Printf("data is %v \n", data)
+        time.Sleep(2 * time.Second)
+        fmt.Println("----------------------> 释放读锁")
+    }
 
-	writer := func(lock sync.Locker) {
-		defer wg.Done()
-		lock.Lock()
-		defer lock.Unlock()
+    writer := func(lock sync.Locker) {
+        defer wg.Done()
+        lock.Lock()
+        defer lock.Unlock()
 
-		fmt.Println("----------------------> 获取互斥锁\n修改数据中...")
-		time.Sleep(2 * time.Second)
-		data++
-		fmt.Println("----------------------> 释放互斥锁")
-	}
+        fmt.Println("----------------------> 获取互斥锁\n修改数据中...")
+        time.Sleep(2 * time.Second)
+        data++
+        fmt.Println("----------------------> 释放互斥锁")
+    }
 
-	var m sync.RWMutex      // (0) 可以用 m.Lock() 加互斥锁、用 m.RLock() 加读锁
-	go writer(&m)           // (1) writer goroutine 使用 &m 把互斥锁传过去
-	time.Sleep(time.Second) //
-	go reader(m.RLocker())  // (2) 这里使用 m.RLocker() 把读锁传过去
-	go reader(m.RLocker())  // (3) 可以发现写锁(即互斥锁)被释放后,  同时有三个 goroutine 获取了读锁
-	go reader(m.RLocker())
-	wg.Wait()
+    var m sync.RWMutex      // (0) 可以用 m.Lock() 加互斥锁、用 m.RLock() 加读锁
+    go writer(&m)           // (1) writer goroutine 使用 &m 把互斥锁传过去
+    time.Sleep(time.Second) //
+    go reader(m.RLocker())  // (2) 这里使用 m.RLocker() 把读锁传过去
+    go reader(m.RLocker())  // (3) 可以发现写锁(即互斥锁)被释放后,  同时有三个 goroutine 获取了读锁
+    go reader(m.RLocker())
+    wg.Wait()
 }
 ```
 
@@ -198,7 +198,7 @@ If we were to look at how to accomplish this without the Cond type, one naive ap
 
 ```go
 for condition() == false {
-	time.Sleep(1*time.Millisecond)
+    time.Sleep(1*time.Millisecond)
 }
 ```
 
@@ -208,38 +208,38 @@ You have to figure out how long to sleep for: too long, and you’re artificiall
 
 ```go
 func 使用Cond模拟恰饭() {
-	var 饭好了 bool
-	var log = fmt.Println
-	condition := sync.NewCond(&sync.Mutex{})
+    var 饭好了 bool
+    var log = fmt.Println
+    condition := sync.NewCond(&sync.Mutex{})
 
-	log("我: 点菜")
-	go func() {
-		time.Sleep(time.Second)
-		log("厨师: 开始做菜")
-		time.Sleep(time.Second)
-		log("厨师: 疯狂翻炒....")
-		time.Sleep(time.Second)
-		log("厨师: 装到碗里")
-		time.Sleep(time.Second)
-		log("厨师: 搞定!")
+    log("我: 点菜")
+    go func() {
+        time.Sleep(time.Second)
+        log("厨师: 开始做菜")
+        time.Sleep(time.Second)
+        log("厨师: 疯狂翻炒....")
+        time.Sleep(time.Second)
+        log("厨师: 装到碗里")
+        time.Sleep(time.Second)
+        log("厨师: 搞定!")
 
-		condition.L.Lock() // 修改共享内存前要加锁
-		饭好了 = true
-		condition.Signal() // 通知另一个协程某某事件发生了
-		condition.L.Unlock()
-	}()
+        condition.L.Lock() // 修改共享内存前要加锁
+        饭好了 = true
+        condition.Signal() // 通知另一个协程某某事件发生了
+        condition.L.Unlock()
+    }()
 
-	condition.L.Lock() //    访问共享内存前要加锁
-	for 饭好了 == false { // 注意这里用一个 for 循环, 只要饭没好就一直等
-		log("我: 等呀等")
-		condition.Wait() // 这行有一点魔法:
-		// 					(1) 调用 Wait() 会释放锁,  并挂起协程,  直到 condition.Signal()
-		// 					(2) 协程被唤醒时会重新申请锁,  等拿到锁后,  才会从 Wait() 返回
-	}
-	condition.L.Unlock()
+    condition.L.Lock() //    访问共享内存前要加锁
+    for 饭好了 == false { // 注意这里用一个 for 循环, 只要饭没好就一直等
+        log("我: 等呀等")
+        condition.Wait() // 这行有一点魔法:
+        //                     (1) 调用 Wait() 会释放锁,  并挂起协程,  直到 condition.Signal()
+        //                     (2) 协程被唤醒时会重新申请锁,  等拿到锁后,  才会从 Wait() 返回
+    }
+    condition.L.Unlock()
 
-	log("我: 终于好了")
-	log("我: 真香~")
+    log("我: 终于好了")
+    log("我: 真香~")
 }
 ```
 
@@ -277,25 +277,25 @@ As the name implies, `sync.Once` is a type that utilizes some sync primitives in
 
 ```go
 func 使用Once() {
-	var wg sync.WaitGroup
-	var once sync.Once
-	rand.Seed(time.Now().UnixMilli())
+    var wg sync.WaitGroup
+    var once sync.Once
+    rand.Seed(time.Now().UnixMilli())
 
-	var 下单成功 = func() {
-		fmt.Println("恭喜你抢到了产品")
-	}
-	var 抢购者 = func() {
-		defer wg.Done()
-		fmt.Println("我抢!")
-		time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-		once.Do(下单成功) // 3 个协程都会执行这一行,  但下单成功只会执行一次
-	}
+    var 下单成功 = func() {
+        fmt.Println("恭喜你抢到了产品")
+    }
+    var 抢购者 = func() {
+        defer wg.Done()
+        fmt.Println("我抢!")
+        time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+        once.Do(下单成功) // 3 个协程都会执行这一行,  但下单成功只会执行一次
+    }
 
-	wg.Add(3)
-	go 抢购者()
-	go 抢购者()
-	go 抢购者()
-	wg.Wait()
+    wg.Add(3)
+    go 抢购者()
+    go 抢购者()
+    go 抢购者()
+    wg.Wait()
 }
 ```
 
@@ -303,18 +303,18 @@ func 使用Once() {
 
 ```go
 func 可以给Do传不同的函数() {
-	var once sync.Once
-	go func() { once.Do(func() { fmt.Println("恰饭") }) }()
-	go func() { once.Do(func() { fmt.Println("打游戏") }) }()
-	time.Sleep(time.Millisecond) // 要么恰饭、要么打游戏,  只有一个调用会成功
+    var once sync.Once
+    go func() { once.Do(func() { fmt.Println("恰饭") }) }()
+    go func() { once.Do(func() { fmt.Println("打游戏") }) }()
+    time.Sleep(time.Millisecond) // 要么恰饭、要么打游戏,  只有一个调用会成功
 }
 
 func 调用Do时会申请锁() {
-	var once sync.Once
-	f := func() {
-		once.Do(func() {}) // (2) 再次申请同一个锁, 由于尚未执行完 f 并释放锁, 所以会死锁
-	}
-	once.Do(f) // (1) 申请 once 内部的锁、然后执行 f、等 f 执行完才会释放锁
+    var once sync.Once
+    f := func() {
+        once.Do(func() {}) // (2) 再次申请同一个锁, 由于尚未执行完 f 并释放锁, 所以会死锁
+    }
+    once.Do(f) // (1) 申请 once 内部的锁、然后执行 f、等 f 执行完才会释放锁
 } 
 ```
 
@@ -328,17 +328,17 @@ Pool’s primary interface is its `Get` method. When called, `Get` will first ch
 
 ```go
 func 使用Pool重用对象() {
-	myPool := &sync.Pool{
-		New: func() interface{} {
-			fmt.Println("Creating new instance.")
-			return struct{}{}
-		},
-	}
-	instance1 := myPool.Get() // 目前没有空闲, 创建一个新实例
-	instance2 := myPool.Get() // 目前没有空闲, 创建一个新实例
-	myPool.Put(instance2)     // 把 instance2 还回去
-	myPool.Get()              // 有空闲的资源,  直接返回,  不必创建新的
-	fmt.Println(instance1)
+    myPool := &sync.Pool{
+        New: func() interface{} {
+            fmt.Println("Creating new instance.")
+            return struct{}{}
+        },
+    }
+    instance1 := myPool.Get() // 目前没有空闲, 创建一个新实例
+    instance2 := myPool.Get() // 目前没有空闲, 创建一个新实例
+    myPool.Put(instance2)     // 把 instance2 还回去
+    myPool.Get()              // 有空闲的资源,  直接返回,  不必创建新的
+    fmt.Println(instance1)
 } 
 ```
 
@@ -405,7 +405,7 @@ You can also read from a channel using a for-range loop:
 
 ```go
 for v := range ch {
-	fmt.Println(v)
+    fmt.Println(v)
 }
 ```
 
@@ -457,22 +457,22 @@ The goroutine that owns a channel should:
 
 ```go
 func ChannelOwnership() {
-	chanOwner := func() <-chan int {
-		resultStream := make(chan int, 5) // (1) 负责创建 channel
-		go func() {
-			defer close(resultStream)     // (2) 负责关闭 channel
-			for i := 0; i <= 5; i++ {
-				resultStream <- i         // (3) 负责写入 channel
-			}
-		}()
-		return resultStream               // (4) 封装上述逻辑并把 channel 返给 consumer
-	}
+    chanOwner := func() <-chan int {
+        resultStream := make(chan int, 5) // (1) 负责创建 channel
+        go func() {
+            defer close(resultStream)     // (2) 负责关闭 channel
+            for i := 0; i <= 5; i++ {
+                resultStream <- i         // (3) 负责写入 channel
+            }
+        }()
+        return resultStream               // (4) 封装上述逻辑并把 channel 返给 consumer
+    }
 
-	resultStream := chanOwner()
-	for result := range resultStream { // 不断处理数据,  直到 channel 被关闭
-		fmt.Printf("Received: %d\n", result)
-	}
-	fmt.Println("Done receiving!")
+    resultStream := chanOwner()
+    for result := range resultStream { // 不断处理数据,  直到 channel 被关闭
+        fmt.Printf("Received: %d\n", result)
+    }
+    fmt.Println("Done receiving!")
 }
 ```
 
@@ -492,16 +492,16 @@ The `select` keyword allows a goroutine to read from or write to one of a set of
 
 ```go
 func 使用select(ch, ch2, ch3, ch4 chan int, x int) {
-	select {
-	case v := <-ch:                      // 从 ch 读取值
-		fmt.Println(v)
-	case v, ok := <-ch2:                 // 从 ch2 读取值, 可以检查 ok 值
-		fmt.Println(v, ok)
-	case ch3 <- x:                       // 把值写到 ch3
-		fmt.Println("wrote", x)
-	case <-ch4:                          // 从 ch4 读取值, 但忽略返回值
-		fmt.Println("got value on ch4, but ignored it")
-	}
+    select {
+    case v := <-ch:                      // 从 ch 读取值
+        fmt.Println(v)
+    case v, ok := <-ch2:                 // 从 ch2 读取值, 可以检查 ok 值
+        fmt.Println(v, ok)
+    case ch3 <- x:                       // 把值写到 ch3
+        fmt.Println("wrote", x)
+    case <-ch4:                          // 从 ch4 读取值, 但忽略返回值
+        fmt.Println("got value on ch4, but ignored it")
+    }
 }
 ```
 
@@ -519,16 +519,16 @@ Another advantage of select choosing at random is that it prevents one of *the m
 
 ```go
 func 使用channel可能死锁() {
-	ch1 := make(chan int)
-	ch2 := make(chan int)
+    ch1 := make(chan int)
+    ch2 := make(chan int)
 
-	go func() {
-		ch1 <- 111 // 等待 ch1 被读取,  可惜这是等不到的事
-		_ = <-ch2  // 从 ch2 读取内容
-	}()
+    go func() {
+        ch1 <- 111 // 等待 ch1 被读取,  可惜这是等不到的事
+        _ = <-ch2  // 从 ch2 读取内容
+    }()
 
-	ch2 <- 222 // 等待 ch2 被读取
-	_ = <-ch1  // 从 ch1 读取内容
+    ch2 <- 222 // 等待 ch2 被读取
+    _ = <-ch1  // 从 ch1 读取内容
 }
 ```
 
@@ -538,19 +538,19 @@ If we wrap the channel accesses in the main goroutine in a select, we avoid dead
 
 ```go
 func 搭配select_channel可避免死锁() {
-	ch1 := make(chan int)
-	ch2 := make(chan int)
+    ch1 := make(chan int)
+    ch2 := make(chan int)
 
-	go func() {
-		ch1 <- 123456 // 写入 ch1 (①)
-	}()
+    go func() {
+        ch1 <- 123456 // 写入 ch1 (①)
+    }()
 
-	var v2 int
-	select {         // 使用 select 同时等待 ch1、ch2 两个 channel
-	case ch2 <- 789: // 等 ch2 被读取
-	case v2 = <-ch1: // 等 ch1 被写入,  从 ① 可知此 case 会被选中
-	}
-	fmt.Println(v2)  // select 执行完一个 case 就会退出,  这里打印 123456
+    var v2 int
+    select {         // 使用 select 同时等待 ch1、ch2 两个 channel
+    case ch2 <- 789: // 等 ch2 被读取
+    case v2 = <-ch1: // 等 ch1 被写入,  从 ① 可知此 case 会被选中
+    }
+    fmt.Println(v2)  // select 执行完一个 case 就会退出,  这里打印 123456
 }
 ```
 
@@ -560,11 +560,11 @@ The `time.After` function takes in a `time.Duration` argument and returns a chan
 
 ```go
 func 给select加timeout(c <-chan int) {
-	select {
-	case <-c:
-	case <-time.After(time.Second):
-		// 一秒后超时
-	}
+    select {
+    case <-c:
+    case <-time.After(time.Second):
+        // 一秒后超时
+    }
 }
 ```
 
@@ -574,14 +574,14 @@ Since `select` is responsible for communicating over a number of channels, it is
 
 ```go
 func select经常在一个无限循环中(done, ch chan int) {
-	for {
-		select {
-		case <-done: // 必须包含用于退出无限循环的 case
-			return
-		case v := <-ch:
-			fmt.Println(v)
-		}
-	}
+    for {
+        select {
+        case <-done: // 必须包含用于退出无限循环的 case
+            return
+        case v := <-ch:
+            fmt.Println(v)
+        }
+    }
 }
 ```
 
@@ -591,12 +591,12 @@ Just like `switch` statements, a `select` statement can have a default clause. A
 
 ```go
 func 通过default实现非阻塞的select(ch chan int) {
-	select {
-	case v := <-ch:
-		fmt.Println("read from ch:", v)
-	default:
-		fmt.Println("no available case,  run this default branch")
-	}
+    select {
+    case v := <-ch:
+        fmt.Println("read from ch:", v)
+    default:
+        fmt.Println("no available case,  run this default branch")
+    }
 }
 ```
 
@@ -609,15 +609,15 @@ Having a default case inside a for-select loop is almost always the wrong thing 
 
 ```go
 func 非阻塞的_for_select(done <-chan int) {
-	for {
-		select {
-		case <-done:
-			return
-		default:
-			// ① 可以在这里插入代码
-		}
-		// ② 也可以在这里插入代码
-	}
+    for {
+        select {
+        case <-done:
+            return
+        default:
+            // ① 可以在这里插入代码
+        }
+        // ② 也可以在这里插入代码
+    }
 }
 ```
 
@@ -645,34 +645,34 @@ First, our `callBoth` function creates a cancellable context and a cancellation 
 
 ```go
 func callBoth(ctx context.Context, urlA, urlB string) {
-	// 用传入的 ctx 创建可取消的 Context,  使用 defer cancel() 避免忘了取消而泄露资源
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+    // 用传入的 ctx 创建可取消的 Context,  使用 defer cancel() 避免忘了取消而泄露资源
+    ctx, cancel := context.WithCancel(ctx)
+    defer cancel()
 
-	// 用两个 goroutine 分别请求两个外部服务,  如果遇到了错误用 cancel() 取消另一个服务调用
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		err := callService(ctx, "serviceA", urlA)
-		if err != nil {
-			cancel()
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		err := callService(ctx, "serviceB", urlB)
-		if err != nil {
-			cancel()
-		}
-	}()
-	wg.Wait()
-	fmt.Println("done with both")
+    // 用两个 goroutine 分别请求两个外部服务,  如果遇到了错误用 cancel() 取消另一个服务调用
+    var wg sync.WaitGroup
+    wg.Add(2)
+    go func() {
+        defer wg.Done()
+        err := callService(ctx, "serviceA", urlA)
+        if err != nil {
+            cancel()
+        }
+    }()
+    go func() {
+        defer wg.Done()
+        err := callService(ctx, "serviceB", urlB)
+        if err != nil {
+            cancel()
+        }
+    }()
+    wg.Wait()
+    fmt.Println("done with both")
 }
 
 func callService(ctx context.Context, name string, url string) error {
-	// 使用 ctx 创建请求,  当 ctx 被取消时,  发出的请求也会被终止
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+    // 使用 ctx 创建请求,  当 ctx 被取消时,  发出的请求也会被终止
+    req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 }
 ```
 
@@ -680,34 +680,34 @@ func callService(ctx context.Context, name string, url string) error {
 
 ```go
 func 用_Context_支持取消() {
-	startSomeWork := func(ctx context.Context) error {
-		done := make(chan struct{})
-		go func() {
-			defer close(done)
-			for i := 1; i <= 5; i++ {
-				select {
-				// ctx.Done() 返回一个 channel,  当 ctx 被取消时这个 channel 会被关闭
-				case <-ctx.Done():
-					fmt.Println("任务被取消了")
-					return
-				default:
-					time.Sleep(time.Second) // 总共要 5 秒才能完成任务
-					fmt.Printf("进度: %d\n", i*20)
-				}
-			}
-			fmt.Println("任务完成")
-		}()
-		<-done
-		return ctx.Err()
-	}
+    startSomeWork := func(ctx context.Context) error {
+        done := make(chan struct{})
+        go func() {
+            defer close(done)
+            for i := 1; i <= 5; i++ {
+                select {
+                // ctx.Done() 返回一个 channel,  当 ctx 被取消时这个 channel 会被关闭
+                case <-ctx.Done():
+                    fmt.Println("任务被取消了")
+                    return
+                default:
+                    time.Sleep(time.Second) // 总共要 5 秒才能完成任务
+                    fmt.Printf("进度: %d\n", i*20)
+                }
+            }
+            fmt.Println("任务完成")
+        }()
+        <-done
+        return ctx.Err()
+    }
 
-	// 可以手动 cancel() 提前取消, 注意 defer cancel() 是个好习惯,
-	// 既能确保 cancel() 至少被调用一次,  也能确保相关资源被尽早释放 (不必等到 timeout 才释放)
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+    // 可以手动 cancel() 提前取消, 注意 defer cancel() 是个好习惯,
+    // 既能确保 cancel() 至少被调用一次,  也能确保相关资源被尽早释放 (不必等到 timeout 才释放)
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
 
-	err := startSomeWork(ctx) // 一个函数若想支持取消,  则把 context.Context 作为第一个参数
-	fmt.Println("error:", err)
+    err := startSomeWork(ctx) // 一个函数若想支持取消,  则把 context.Context 作为第一个参数
+    fmt.Println("error:", err)
 }
 ```
 
@@ -715,36 +715,36 @@ func 用_Context_支持取消() {
 
 ```go
 func longRunningThingManager(ctx context.Context, data string) (string, error) {
-	// We need to put the data returned from our long-running function into a struct
-	type wrapper struct {
-		result string
-		err    error
-	}
-	// By buffering the channel, we allow the goroutine to exit,
-	// even if the buffered value is never read due to cancellation.
-	ch := make(chan wrapper, 1)
-	go func() {
-		result, err := longRunningThing(ctx, data)
-		ch <- wrapper{result, err}
-	}()
-	select {
-	case w := <-ch:
-		return w.result, w.err
-	case <-ctx.Done():
-		return "", ctx.Err() // 被取消了, 返回 Canceled/DeadlineExceeded
-	}
+    // We need to put the data returned from our long-running function into a struct
+    type wrapper struct {
+        result string
+        err    error
+    }
+    // By buffering the channel, we allow the goroutine to exit,
+    // even if the buffered value is never read due to cancellation.
+    ch := make(chan wrapper, 1)
+    go func() {
+        result, err := longRunningThing(ctx, data)
+        ch <- wrapper{result, err}
+    }()
+    select {
+    case w := <-ch:
+        return w.result, w.err
+    case <-ctx.Done():
+        return "", ctx.Err() // 被取消了, 返回 Canceled/DeadlineExceeded
+    }
 }
 
 func longRunningThing(ctx context.Context, data string) (string, error) {
-	for i := 0; i < 5; i++ {
-		select {
-		case <-ctx.Done():
-			return "", ctx.Err()
-		default:
-			time.Sleep(time.Second)
-		}
-	}
-	return "task result", nil
+    for i := 0; i < 5; i++ {
+        select {
+        case <-ctx.Done():
+            return "", ctx.Err()
+        default:
+            time.Sleep(time.Second)
+        }
+    }
+    return "task result", nil
 }
 ```
 
@@ -770,21 +770,21 @@ Any timeout that you set on *the child context is bounded by the timeout set on 
 
 ```go
 func The_Context_Interface() {
-	// Background returns an empty Context. It is never canceled, has no values, and has no deadline.
-	c := context.Background()                                          // 不带取消功能
-	c1, cancel := context.WithCancel(c)                                // 只能手动取消
-	c2, cancel := context.WithTimeout(c, time.Second)                  // 在若干秒后取消, 或手动取消
-	c3, cancel := context.WithDeadline(c, time.Now().Add(time.Second)) // 在特定时刻取消, 或手动取消
+    // Background returns an empty Context. It is never canceled, has no values, and has no deadline.
+    c := context.Background()                                          // 不带取消功能
+    c1, cancel := context.WithCancel(c)                                // 只能手动取消
+    c2, cancel := context.WithTimeout(c, time.Second)                  // 在若干秒后取消, 或手动取消
+    c3, cancel := context.WithDeadline(c, time.Now().Add(time.Second)) // 在特定时刻取消, 或手动取消
 
-	channel := c.Done()          // 当 c 被取消时这个 channel 会被关闭
-	deadline, ok := c.Deadline() // 返回截止时间,  如果无截止时间那么 ok 为 false
+    channel := c.Done()          // 当 c 被取消时这个 channel 会被关闭
+    deadline, ok := c.Deadline() // 返回截止时间,  如果无截止时间那么 ok 为 false
 
-	// Err returns a non-nil error value after Done is closed.
-	// Err returns Canceled if the context was canceled or DeadlineExceeded if the context's deadline passed.
-	err := c.Err()
+    // Err returns a non-nil error value after Done is closed.
+    // Err returns Canceled if the context was canceled or DeadlineExceeded if the context's deadline passed.
+    err := c.Err()
 
-	// Value returns the value associated with this context for key, or nil if no value is associated with key.
-	val := c.Value("key")
+    // Value returns the value associated with this context for key, or nil if no value is associated with key.
+    val := c.Value("key")
 }
 ```
 
@@ -796,13 +796,13 @@ To check if a value is in a context or any of its parents, use the `Value` metho
 
 ```go
 func data_bag() {
-	// Context 是不可变对象, 使用 WithValue 添加键值对, 这会返回一个新实例
-	// 注意 key 必须支持 == 操作符,  所以不能用 map/slice/function 作为 key
-	c := context.WithValue(context.Background(), "userID", "123")
+    // Context 是不可变对象, 使用 WithValue 添加键值对, 这会返回一个新实例
+    // 注意 key 必须支持 == 操作符,  所以不能用 map/slice/function 作为 key
+    c := context.WithValue(context.Background(), "userID", "123")
 
-	// 从 Context 取值时要加 type assertion
-	ID := c.Value("userID").(string)
-	fmt.Println(ID)
+    // 从 Context 取值时要加 type assertion
+    ID := c.Value("userID").(string)
+    fmt.Println(ID)
 }
 ```
 
@@ -810,14 +810,14 @@ func data_bag() {
 
 ```go
 func 用接口作为key() {
-	type foo int
-	type bar int
-	m := make(map[interface{}]int)
-	m[foo(1)] = 222     // 两个 key 的底层值都是 1
-	m[bar(1)] = 333     // 两个 key 的底层值都是 1
-	fmt.Printf("%v", m) // map[1:222 1:333]
-	
-	// 总之,  若用接口类型作为 map key,  只有类型和值都相同时,  两个 key 才相等
+    type foo int
+    type bar int
+    m := make(map[interface{}]int)
+    m[foo(1)] = 222     // 两个 key 的底层值都是 1
+    m[bar(1)] = 333     // 两个 key 的底层值都是 1
+    fmt.Printf("%v", m) // map[1:222 1:333]
+    
+    // 总之,  若用接口类型作为 map key,  只有类型和值都相同时,  两个 key 才相等
 }
 ```
 
@@ -840,26 +840,26 @@ type contextKey string
 const contextKeyIsAuthenticated = contextKey("isAuthenticated")
 
 func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sessionValid := true
-		if !sessionValid {
-			next.ServeHTTP(w, r)
-			return
-		}
-		ctx := context.WithValue(r.Context(), contextKeyIsAuthenticated, true)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        sessionValid := true
+        if !sessionValid {
+            next.ServeHTTP(w, r)
+            return
+        }
+        ctx := context.WithValue(r.Context(), contextKeyIsAuthenticated, true)
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
 }
 
 func SomeHandler(w http.ResponseWriter, r *http.Request) {
-	isAuthenticated, ok := r.Context().Value(contextKeyIsAuthenticated).(bool)
-	if !ok {
-		// 不存在相应的 key
-	}
-	
-	if isAuthenticated {
-		fmt.Println("用户已通过中间件的校验")
-	}
+    isAuthenticated, ok := r.Context().Value(contextKeyIsAuthenticated).(bool)
+    if !ok {
+        // 不存在相应的 key
+    }
+    
+    if isAuthenticated {
+        fmt.Println("用户已通过中间件的校验")
+    }
 }
 ```
 
@@ -879,55 +879,55 @@ As we mentioned earlier, when you have multiple goroutines writing to the same c
 
 ```go
 func main() {
-	start := time.Now()
-	tasks := generator(1, 2, 3, 4, 5, 6, 7)
-	power := func(num int) int {
-		time.Sleep(time.Second)
-		return num * num
-	}
-	result := processAndGather(tasks, power, 3)
-	fmt.Println(time.Since(start).Seconds(), result)
+    start := time.Now()
+    tasks := generator(1, 2, 3, 4, 5, 6, 7)
+    power := func(num int) int {
+        time.Sleep(time.Second)
+        return num * num
+    }
+    result := processAndGather(tasks, power, 3)
+    fmt.Println(time.Since(start).Seconds(), result)
 }
 
 func generator(integers ...int) <-chan int {
-	intStream := make(chan int)
-	go func() {
-		defer close(intStream)
-		for _, i := range integers {
-			select {
-			case intStream <- i:
-			}
-		}
-	}()
-	return intStream
+    intStream := make(chan int)
+    go func() {
+        defer close(intStream)
+        for _, i := range integers {
+            select {
+            case intStream <- i:
+            }
+        }
+    }()
+    return intStream
 }
 
 func processAndGather(in <-chan int, processor func(int) int, num int) []int {
-	// 开 num 个 worker 不断处理任务
-	out := make(chan int)
-	var wg sync.WaitGroup
-	wg.Add(num)
-	for i := 0; i < num; i++ {
-		go func() {
-			defer wg.Done()
-			for v := range in {
-				out <- processor(v)
-			}
-		}()
-	}
+    // 开 num 个 worker 不断处理任务
+    out := make(chan int)
+    var wg sync.WaitGroup
+    wg.Add(num)
+    for i := 0; i < num; i++ {
+        go func() {
+            defer wg.Done()
+            for v := range in {
+                out <- processor(v)
+            }
+        }()
+    }
 
-	// 等待所有 worker 都退出
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
+    // 等待所有 worker 都退出
+    go func() {
+        wg.Wait()
+        close(out)
+    }()
 
-	// 不断接收 worker 的结果,  收集成一个切片
-	var result []int
-	for v := range out {
-		result = append(result, v)
-	}
-	return result
+    // 不断接收 worker 的结果,  收集成一个切片
+    var result []int
+    for v := range out {
+        result = append(result, v)
+    }
+    return result
 }
 ```
 
@@ -939,28 +939,28 @@ The Go authors maintain a set of *utilities that supplements the standard librar
 
 ```go
 func 等待所有goroutine结束并检查是否存在错误() {
-	type task struct {
-		time  time.Duration
-		error error
-	}
-	start := time.Now()
-	group := new(errgroup.Group)
-	tasks := []task{
-		{1 * time.Second, errors.New("error 1")},
-		{2 * time.Second, nil},
-		{3 * time.Second, errors.New("error 3")},
-	}
+    type task struct {
+        time  time.Duration
+        error error
+    }
+    start := time.Now()
+    group := new(errgroup.Group)
+    tasks := []task{
+        {1 * time.Second, errors.New("error 1")},
+        {2 * time.Second, nil},
+        {3 * time.Second, errors.New("error 3")},
+    }
 
-	for _, t := range tasks {
-		t := t
-		group.Go(func() error {
-			time.Sleep(t.time)
-			return t.error
-		})
-	}
-	// Wait 方法等待所有 goroutine 结束,  并返回首个 non-nil error
-	err := group.Wait()
-	fmt.Println(time.Since(start).Seconds(), err)
+    for _, t := range tasks {
+        t := t
+        group.Go(func() error {
+            time.Sleep(t.time)
+            return t.error
+        })
+    }
+    // Wait 方法等待所有 goroutine 结束,  并返回首个 non-nil error
+    err := group.Wait()
+    fmt.Println(time.Since(start).Seconds(), err)
 }
 ```
 
@@ -976,47 +976,47 @@ type Result string
 type Search func(ctx context.Context, query string) (Result, error)
 
 func fakeSearch(kind string, duration time.Duration, err error) Search {
-	return func(_ context.Context, query string) (Result, error) {
-		time.Sleep(duration)
-		fmt.Println(kind, "done")
-		return Result(fmt.Sprintf("%s result for %q", kind, query)), err
-	}
+    return func(_ context.Context, query string) (Result, error) {
+        time.Sleep(duration)
+        fmt.Println(kind, "done")
+        return Result(fmt.Sprintf("%s result for %q", kind, query)), err
+    }
 }
 
 func main() {
-	searches := []Search{
-		fakeSearch("web", 1*time.Second, nil),
-		fakeSearch("image", 2*time.Second, nil),
-		fakeSearch("video", 3*time.Second, errors.New("video: search error")),
-	}
-	// 调用 Google 时内部会跑 web、image、video 三个子搜索
-	results, err := Google(context.Background(), "golang", searches)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	for _, result := range results {
-		fmt.Println(result)
-	}
+    searches := []Search{
+        fakeSearch("web", 1*time.Second, nil),
+        fakeSearch("image", 2*time.Second, nil),
+        fakeSearch("video", 3*time.Second, errors.New("video: search error")),
+    }
+    // 调用 Google 时内部会跑 web、image、video 三个子搜索
+    results, err := Google(context.Background(), "golang", searches)
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    for _, result := range results {
+        fmt.Println(result)
+    }
 }
 
 func Google(ctx context.Context, query string, searches []Search) ([]Result, error) {
-	// 这个函数演示了: 同时跑多个子任务、等待所有子任务完成、收集结果、处理错误
-	group, ctx := errgroup.WithContext(ctx)
-	results := make([]Result, len(searches))
-	for i, search := range searches {
-		i, search := i, search // 避免捕获会变的变量
-		group.Go(func() error {
-			result, err := search(ctx, query)
-			if err == nil {
-				results[i] = result // 每个结果都有自己的坑位
-			}
-			return err
-		})
-	}
-	if err := group.Wait(); err != nil {
-		return nil, err // 返回首个 non-nil error
-	}
-	return results, nil
+    // 这个函数演示了: 同时跑多个子任务、等待所有子任务完成、收集结果、处理错误
+    group, ctx := errgroup.WithContext(ctx)
+    results := make([]Result, len(searches))
+    for i, search := range searches {
+        i, search := i, search // 避免捕获会变的变量
+        group.Go(func() error {
+            result, err := search(ctx, query)
+            if err == nil {
+                results[i] = result // 每个结果都有自己的坑位
+            }
+            return err
+        })
+    }
+    if err := group.Wait(); err != nil {
+        return nil, err // 返回首个 non-nil error
+    }
+    return results, nil
 }
 ```
