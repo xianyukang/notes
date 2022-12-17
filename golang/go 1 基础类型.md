@@ -297,8 +297,8 @@ m := map[string]int{} // 这创建了一个空的 map
 var m map[string]int  // 这是一个 nil map, 比较危险
 ```
 
-Attempting to read a `nil` map always returns the zero value for the map’s value type.  
-However, attempting to write to a nil map variable causes a panic.
+A `nil` map behaves like an empty map when reading,  
+but attempts to write to a `nil` map will cause a runtime panic; don't do that.
 
 如果事先知道 map 中会有多少键值对, 为了减少底层数组的扩容开销  
 You can use `make` to create a map with a default size: `ages := make(map[int]string, 10)`  
