@@ -36,13 +36,13 @@ Before we can use code from packages outside of the standard library, we need to
 
 ### go.mod 文件
 
-➤ 创建 go.mod
+#### ➤ 创建 go.mod
 
 A collection of Go source code becomes a module when there’s a valid `go.mod` file in its root directory. Rather than create this file manually, we use the subcommands of the go mod command to manage modules. The command `go mod init MODULE_PATH` creates the go.mod file.
 
 ![image-20220517004612730](https://static.xianyukang.com/img/image-20220517004612730.png) 
 
-➤ module path 重要的是唯一性
+#### ➤ module path 重要的是唯一性
 
 模块路径可以随便取,  比如 xxx.xianyukang.com 或 xianyukang.com/xxx 都行,  重要的是唯一性.  
 Every module has a globally unique identifier. This is not unique to Go. Java uses globally unique package declarations like com.companyname.projectname.library. In Go, we usually use the path to the module repository where the module is found. For example, Proteus, a module I wrote to simplify relational database access in Go, can be found at GitHub. It has a module path of `github.com/jonbodner/proteus`. The module path is case-sensitive. To reduce confusion, do not use uppercase letters within it. 
@@ -93,7 +93,7 @@ You can also use `_` as the package name. We’ll explore what this does when we
 
 ### 谨慎使用 init 函数
 
-➤ `init` 可用来初始化包级别的变量/状态
+#### ➤ `init` 可用来初始化包级别的变量/状态
 
 One of the reasons why Go doesn’t have method overriding or function overloading is to make it easier to understand what code is running. However, there is a way to set up state in a package without explicitly calling anything: the `init` function.   
 
@@ -103,7 +103,7 @@ Some packages, like database drivers, use `init` functions to register the datab
 
 This pattern is considered obsolete because it’s unclear that a registration operation is being performed. If you have a registry pattern in your own code, register your plug-ins explicitly. The primary use of `init` functions today is to initialize package-level variables that can’t be configured in a single assignment.
 
-➤ init 在什么时候执行?  (假设运行 b 包、并且 b 导入了 a)
+#### ➤ init 在什么时候执行?  (假设运行 b 包、并且 b 导入了 a)
 
 1. 因为 b 包导入了 a 包, 所以先初始化 a 包
 2. 初始化一个包时,  先执行的 `var Name = getName()` 这样的变量定义
@@ -209,11 +209,11 @@ For projects that are still experimental — at major version `v0` — occasiona
 
 ### 发布一个模块就是扔到 VCS
 
-➤ go get 可以从版本控制系统 (比如 Git) 下载源码
+#### ➤ go get 可以从版本控制系统 (比如 Git) 下载源码
 
 Making your module available to other people is as simple as putting it in a version control system. This is true whether you are releasing your project as open source on a public version control system like GitHub or a private one that’s hosted within your organization. Since Go programs build from source code and use a repository path to identify themselves, there’s no need to explicitly upload your module to a central library repository, like you do for Maven Central or npm. Make sure you check in both your go.mod file and your go.sum file.
 
-➤ 模块的版本就是仓库中的 tag
+#### ➤ 模块的版本就是仓库中的 tag
 
 Whether your module is public or private, you must properly version your module so that it works correctly with Go’s module system. As long as you are adding functionality or patching bugs, the process is simple. Store your changes in your source code repository, then apply a tag that follows the semantic versioning rules.
 
@@ -248,14 +248,14 @@ In addition to the proxy server, Google also maintains a sum database. It stores
 
 Every time you download a module via go build, go test, or go get, the Go tools calculate a hash for the module and contact the sum database to compare the calculated hash to the hash stored for that module’s version. If they don’t match, the module isn’t installed.  
 
-➤ Specifying a Proxy Server
+#### ➤ Specifying a Proxy Server
 
 - If you don’t want to use Google’s, you can switch to GoCenter by setting the GOPROXY environment
   variable to https://gocenter.io,direct.  
 - You can disable proxying entirely by setting the GOPROXY environment variable to `direct`. You’ll download modules directly from their repositories, but if you depend on a version that’s removed from the repository, you won’t be able to access it.
 - You can run your own proxy server. The Athens Project provides an open source proxy server. Install one of these products on your network and then point GOPROXY to the URL.  
 
-➤ Private Repositories
+#### ➤ Private Repositories
 
 Most organizations keep their code in private repositories. If you want to use a private module in another Go project, you can’t request it from Google’s proxy server. Go will fall back to checking the private repository directly, but you might not want to leak the names of private servers and repositories to external services. 
 

@@ -23,13 +23,13 @@
 
 ### 错误处理概述
 
-➤ 返回错误值、而不是抛出错误
+#### ➤ 返回错误值、而不是抛出错误
 
 Go handles errors by returning a value of type `error` as the last return value for a function. The calling function then checks the error return value by comparing it to `nil`, handling the error, or returning an error of its own.  A new error is created from a string by calling the `errors.New` function. Error messages should not be capitalized nor should they end with punctuation or a newline.  
 
 **Go errors are values**. Unlike languages with exceptions, Go doesn’t have special constructs to detect if an error was returned.  `error` is a built-in interface that defines a single method: `Error() string`. Anything that implements this interface is considered an error.   
 
-➤ Golang 这种错误处理风格の背后的考虑
+#### ➤ Golang 这种错误处理风格の背后的考虑
 
 There are two very good reasons why Go uses a returned error instead of thrown exceptions. First, exceptions add at least one new code path through the code. These paths are sometimes unclear, especially in languages whose functions don’t include a declaration that an exception is possible. This produces code that crashes in surprising ways when exceptions aren’t properly handled, or, even worse, code that doesn’t crash but whose data is not properly initialized, modified, or stored.
 
@@ -43,7 +43,7 @@ Go’s standard library provides two ways to create an error from a string. The 
 
 ### Sentinel Errors
 
-➤ 例子: `var ErrNotExist = errors.New("file does not exist")`
+#### ➤ 例子: `var ErrNotExist = errors.New("file does not exist")`
 
 Sentinel errors are one of the few variables that are declared at the package level. By convention, their names start with `Err` (with the notable exception of `io.EOF`).  Be sure you need a sentinel error before you define one. Once you define one, it is part of your public API and you have committed to it being available in all future backward-compatible releases. It’s far better to reuse one of the existing ones in the standard library.
 
@@ -107,7 +107,7 @@ There are two ways to fix this. The most common approach is to explicitly return
 
 ### 返回错误的最佳实践
 
-➤ [具体例子](https://github.com/uber-go/guide/blob/master/style.md#errors)
+#### ➤ [具体例子](https://github.com/uber-go/guide/blob/master/style.md#errors)
 
 There are few options for declaring errors. Consider the following before picking the option best suited for your use case.
 
@@ -124,7 +124,7 @@ There are few options for declaring errors. Consider the following before pickin
 
 ## Wrapping Errors
 
-[➤ 参考文档](https://go.dev/blog/go1.13-errors)
+[#### ➤ 参考文档](https://go.dev/blog/go1.13-errors)
 
 ### Why Wrapping Errors
 
@@ -208,14 +208,14 @@ if errors.Is(err, ResourceErr{Resource: "Database"}) {
 
 ### 注意 errors.Is 和 errors.As
 
-➤ 用 Is 检查错误链
+#### ➤ 用 Is 检查错误链
 
 ```go
 errors.Is(err, sql.ErrNoRows)   // good
 err == sql.ErrNoRows            // bad, 因为如果哪天 wrap 了错误, 这行代码就会失效
 ```
 
-➤ 用 As 获取错误类型
+#### ➤ 用 As 获取错误类型
 
 ```go
 // errors.As 和类型断言的作用一样 (但能处理嵌套的 error):
@@ -244,23 +244,23 @@ The built-in function `panic` takes one parameter, which can be of any type. Usu
 
 ![image-20220516203534170](https://static.xianyukang.com/img/image-20220516203534170.png) 
 
-➤ 为什么不要滥用 panic
+#### ➤ 为什么不要滥用 panic
 
 While panic and recover look a lot like exception handling in other languages, they are not intended to be used that way. The reason we don’t rely on panic and recover is that recover *doesn’t make clear what could fail*. It just ensures that if something fails, we can print out a message and continue. Idiomatic Go favors code that explicitly outlines the possible failure conditions over shorter code that handles anything while saying nothing.  
 
 Reserve panics for fatal situations and use `recover` as a way to gracefully handle these situations. If your program panics, be very careful about trying to continue executing after the panic. It’s very rare that you want to keep your program running after a panic occurs.   
 
-➤ 一般返回 error 而不是 panic
+#### ➤ 一般返回 error 而不是 panic
 
 In the preceding sample program, it would be idiomatic to check for division by zero and return an error if one was passed in.  既然能预料到除零会导致 panic,  就应该校验参数是否为 0 并返回错误值.
 
 ### 什么时候适合 recover
 
-➤ 用于避免 panic 泄漏给调用者
+#### ➤ 用于避免 panic 泄漏给调用者
 
 There is one situation where `recover` is recommended. If you are creating a library for third parties, do not let panics escape the boundaries of your public API. If a panic is possible, a public function should use a recover to convert the panic into an error, return it, and let the calling code decide what to do with them.  
 
-➤ 用于避免 goroutine 中的 panic 导致整个应用挂掉
+#### ➤ 用于避免 goroutine 中的 panic 导致整个应用挂掉
 
 One application of `recover` is to shut down a failing goroutine inside a server without killing the other executing goroutines. In this example, if `do(work)` panics, the result will be logged and the goroutine will exit cleanly without disturbing the others.
 
@@ -283,7 +283,7 @@ func safelyDo(work *Work) {
 
 ### 用 recover 简化错误处理
 
-➤ 有时候逐层返回错误会让人无法忍受
+#### ➤ 有时候逐层返回错误会让人无法忍受
 
 We can use that idea to simplify error handling in complex software. Let's look at an idealized version of a `regexp` package, which reports parsing errors by calling `panic` with a local error type.
 
@@ -311,15 +311,15 @@ func Compile(str string) (regexp *Regexp, err error) {
 }
 ```
 
-➤ 短短几行代码,  却并不简单 (非常巧妙):
+#### ➤ 短短几行代码,  却并不简单 (非常巧妙):
 
 If `doParse` panics, the recovery block will set the return value to `nil`—deferred functions can modify named return values. It will then check, in the assignment to `err`, that the problem was a parse error by asserting that it has the local type `Error`. If it does not, the type assertion will fail, causing a run-time error that continues the stack unwinding as though nothing had interrupted it. This check means that if something unexpected happens, such as an index out of bounds, the code will fail even though we are using `panic` and `recover` to handle parse errors.
 
-➤ re-panic 修改了 panic value,  但也没什么大问题:
+#### ➤ re-panic 修改了 panic value,  但也没什么大问题:
 
 By the way, this re-panic idiom changes the panic value if an actual error occurs. However, both the original and new failures will be presented in the crash report, so the root cause of the problem will still be visible (崩溃报告会打印整个 panic 链). Thus this simple re-panic approach is usually sufficient—it's a crash after all—but if you want to display only the original value, you can write a little more code to filter unexpected problems and re-panic with the original error. 
 
-➤ 若不想修改 panic value 可以这样做:
+#### ➤ 若不想修改 panic value 可以这样做:
 
 ```go
 func main() {

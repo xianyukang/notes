@@ -64,7 +64,7 @@ As a language that values clarity of intent and readability, Go doesn’t allow 
 
 ### 理解 Comparable
 
-➤ slice、map、function、channel 是不可比较的
+#### ➤ slice、map、function、channel 是不可比较的
 
 The only thing you can compare a slice with is `nil`. It is a compile-time error to use `==` to see if two slices are identical or `!=` to see if they are different. 注意反射包有个 DeepEqual 方法几乎能比较任意类型,  包括 slice.
 
@@ -93,7 +93,7 @@ However, `const` in Go is very limited. Constants in Go are a way to give names 
 
 Go doesn’t provide a way to specify that a value calculated at runtime is immutable. As we’ll see in the next chapter, there are no immutable arrays, slices , maps, or structs, and there’s no way to declare that a field in a struct is immutable. <font color='#D05'>Constants in Go are a way to give names to literals. There is no way in Go to declare that a variable is immutable</font>.  
 
-➤ Typed and Untyped Constants
+#### ➤ Typed and Untyped Constants
 
 Constants can be typed or untyped. An untyped constant works exactly like a literal; it has no type of its own, but does have a default type that is used when no other type can be inferred. A typed constant can only be directly assigned to a variable of that type.
 
@@ -134,24 +134,24 @@ The most visible difference between if statements in Go and other languages is t
 
 
 ```go
-// ➤ A complete, C-style for
+// #### ➤ A complete, C-style for
 for i := 0; i < 10; i++ {
     fmt.Println(i)
 }
 
-// ➤ A condition-only for, like the while statement found in C
+// #### ➤ A condition-only for, like the while statement found in C
 for i < 100 {
     fmt.Println(i)
     i = i * 2
 }
 
-// ➤ An infinite for
+// #### ➤ An infinite for
 for {
     fmt.Println("Hello")
 }
 ```
 
-➤ for-range
+#### ➤ for-range
 
 You can only use a for-range loop to iterate over the built-in compound types and user-defined types that are based on them.
 
@@ -169,11 +169,11 @@ for byte_offset, rune_value := range "abc字符串🐶!" {
 }
 ```
 
-➤ The for-range value is a copy
+#### ➤ The for-range value is a copy
 
 You should be aware that each time the for-range loop iterates over your compound type, it copies the value from the compound type to the value variable. Modifying the value variable will not modify the value in the compound type. 注意不要用 `for _, v := range items { v.id = 123 }` 修改数组中的结构体,  因为 `v` 是一个拷贝.
 
-➤ Labeling Your for Statements
+#### ➤ Labeling Your for Statements
 
 By default, the break and continue keywords apply to the for loop that directly contains them. What if you have nested for loops and you want to exit or skip over an iterator of an outer loop?  
 
@@ -188,13 +188,13 @@ In our sample program we are switching on the value of an integer, but that’s 
 在 switch 语句中一般不会写 break,  但是也允许写,  break 的行为是提前退出当前 switch 语句  
 如果 for 循环里面嵌套了一个 switch 语句,  可以用上一节讲的 labeled for statement 退出外层循环
 
-➤ Blank Switch
+#### ➤ Blank Switch
 
 You can write a switch statement that doesn’t specify the value that you’re comparing against. This is called a blank switch. A regular switch only allows you to check a value for equality. A blank switch allows you to use any boolean comparison for each case.
 
 ![image-20220509121137866](https://static.xianyukang.com/img/image-20220509121137866.png) 
 
-➤ 总结
+#### ➤ 总结
 
 Go's `switch` is more general than C's. The expressions need not be constants or even integers, the cases are evaluated top to bottom until a match is found, and if the `switch` has no expression (blank switch) it switches on `true`. It's therefore possible—and idiomatic—to write an `if`-`elseif`-`else` chain as a `switch`.
 
@@ -263,7 +263,7 @@ func div(a int, b int) (result int, err error) {
 }
 ```
 
- [➤ 为什么 defer 配合 named return vlaue 能修改函数返回值?](https://stackoverflow.com/questions/37248898/how-does-defer-and-named-return-value-work)
+ [#### ➤ 为什么 defer 配合 named return vlaue 能修改函数返回值?](https://stackoverflow.com/questions/37248898/how-does-defer-and-named-return-value-work)
 
 一些注意点:
 
@@ -276,11 +276,11 @@ func div(a int, b int) (result int, err error) {
 
 ### 函数变量/类型
 
-➤ 声明函数变量: `var f func(a, b int) int`.
+#### ➤ 声明函数变量: `var f func(a, b int) int`.
 
 Just like in many other languages, functions in Go are values. The type of a function is built out of the keyword `func` and the types of the parameters and return values. This combination is called the signature of the function. Any function that has the exact same number and types of parameters and return values meets the type signature.
 
-➤ 创建函数类型: `type opFuncType func(int,int) int`
+#### ➤ 创建函数类型: `type opFuncType func(int,int) int`
 
 Just like you can use the type keyword to define a struct, you can use it to define a function type, too. Any function that has two input parameters of type int and a single return value of type int automatically meets this type.
 
@@ -306,7 +306,7 @@ defer func() {
 }()
 ```
 
-➤ 闭包就是带状态的函数
+#### ➤ 闭包就是带状态的函数
 
 Functions declared inside of functions are special; they are closures. This is a computer science word that means that functions declared inside of functions are able to access and modify variables declared in the outer function.  
 
@@ -326,7 +326,7 @@ func counter() func() {
 }
 ```
 
-➤ 使用匿名函数对切片进行排序
+#### ➤ 使用匿名函数对切片进行排序
 
 ![image-20220509191650192](https://static.xianyukang.com/img/image-20220509191650192.png) 
 
@@ -352,7 +352,7 @@ defer 的执行时机为: 在 retrun/panic 语句之后、在函数返回之前
 defer 的执行顺序为 LIFO,  最后一个注册的 defer 最先执行  
 defer 有时候不执行, 比如 `log.Fatal`、`os.Exit`、终端中按下 `Ctrl+C`,  这些都会导致进程立即退出
 
-➤ 用 defer 修改函数返回值
+#### ➤ 用 defer 修改函数返回值
 
 ![image-20220509234632112](https://static.xianyukang.com/img/image-20220509234632112.png)  
 
@@ -360,7 +360,7 @@ defer 有时候不执行, 比如 `log.Fatal`、`os.Exit`、终端中按下 `Ctrl
 
 Deferring a call to a function such as `Close` has two advantages. First, it guarantees that you will never forget to close the file, a mistake that's easy to make if you later edit the function to add a new return path. Second, it means that the close sits near the open, which is much clearer than placing it at the end of the function.
 
-➤ The arguments to the deferred function are evaluated when the defer executes, not when the call executes.
+#### ➤ The arguments to the deferred function are evaluated when the defer executes, not when the call executes.
 
 ```go
 func main() {
@@ -379,5 +379,5 @@ func main() {
 }
 ```
 
-➤ `defer` is not block-based but function-based
+#### ➤ `defer` is not block-based but function-based
 

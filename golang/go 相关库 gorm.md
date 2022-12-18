@@ -61,14 +61,14 @@
 
 ### 入门
 
-➤ 安装
+#### ➤ 安装
 
 ```bash
 go get -u gorm.io/gorm
 go get -u gorm.io/driver/mysql
 ```
 
-➤ 初始化 ORM
+#### ➤ 初始化 ORM
 
 > 注意: 想要正确的处理 `time.Time` ，dsn 需要带上 `parseTime=True` 参数，要支持完整的 UTF-8 编码，需要加上 `charset=utf8mb4` 参数, 查看 [此文章](https://mathiasbynens.be/notes/mysql-utf8mb4) 理解 mysql 的字符串编码. 另外还需要添加 `loc=Local` ,  这样 mysql driver 从查询结果生成 time.Time 结构时,  生成的 time.Time 结构的 Location 字段才是 Local. [参数来源 mysql driver 文档](https://github.com/go-sql-driver/mysql#parameters)
 >
@@ -84,7 +84,7 @@ if err != nil {
 }
 ```
 
-➤ 定义 model
+#### ➤ 定义 model
 
 ```go
 // 其中 gorm.Model 定义了主键 ID、创建时间、更新时间等字段,  此外还有删除时间表示逻辑删除
@@ -95,7 +95,7 @@ type Product struct {
 }
 ```
 
-➤ 几个 CRUD 例子
+#### ➤ 几个 CRUD 例子
 
 ```go
   // Create
@@ -118,7 +118,7 @@ type Product struct {
 
 ### 日志配置
 
-[➤ 参考文档](https://gorm.io/docs/logger.html)
+[#### ➤ 参考文档](https://gorm.io/docs/logger.html)
 
 1. Gorm will print Slow SQL and happening errors by default.
 2. 可以修改日志的输出目标、输出格式、如果把日志级别调成 info 能方便看 SQL 日志
@@ -127,7 +127,7 @@ type Product struct {
 
 ### GORM 配置
 
-[➤ 参考文档](https://gorm.io/zh_CN/docs/gorm_config.html)
+[#### ➤ 参考文档](https://gorm.io/zh_CN/docs/gorm_config.html)
 
 1. 修改创建表时的命名策略,  比如表名用什么前缀 (默认无)、使用单数还是复数 (默认复数, 推荐改成单数)
 
@@ -135,7 +135,7 @@ type Product struct {
 
 在 `AutoMigrate` 或 `CreateTable` 时，GORM 会自动创建外键约束，可以禁用该特性.
 
-➤ 外键约束是什么?  
+#### ➤ 外键约束是什么?  
 
 >
 > 通过定义外键约束，关系数据库可以保证无法插入无效的数据。即如果 `classes` 表不存在 `id=99` 的记录，`students`表就无法插入`class_id=99`的记录。由于外键约束会降低数据库的性能，大部分互联网应用程序为了追求速度，并不设置外键约束，而是仅靠应用程序自身来保证逻辑的正确性。这种情况下，`class_id` 仅仅是一个普通的列，只是它起到了外键的作用而已。
@@ -146,7 +146,7 @@ type Product struct {
 (2) InnoDB 存储引擎限制了字符串索引不能超过 767 Byte,  [如果用 utf8mb4 编码也就是 191 个字符](https://stackoverflow.com/a/1814594)  
 (3) 所以一开始把字符串列设为 `varchar(191)`,  后面对这个 string column 建索引就不会报错,  比较方便
 
-➤ 例子如下
+#### ➤ 例子如下
 
 ```go
 func GORM配置() {
@@ -184,7 +184,7 @@ type User struct {
 }
 ```
 
-➤ GORM 约定的表名、列名、更新时间
+#### ➤ GORM 约定的表名、列名、更新时间
 
 GORM prefers convention over configuration. By default, GORM uses `ID` as primary key, pluralizes struct name to `snake_cases` as table name, `snake_case` as column name, and uses `CreatedAt`, `UpdatedAt` to track creating/updating time. If you follow the conventions adopted by GORM, you’ll need to write very little configuration/code. If convention doesn’t match your requirements, [GORM allows you to configure them](https://gorm.io/docs/conventions.html).
 
@@ -225,7 +225,7 @@ func 创建表() {
 
 ### 一些 gorm tag
 
-[➤ 参考文档](https://gorm.io/docs/models.html#Fields-Tags)
+[#### ➤ 参考文档](https://gorm.io/docs/models.html#Fields-Tags)
 
 ```go
 type GormTag struct {
@@ -310,7 +310,7 @@ func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 
 ### 插入记录的各种方式
 
-➤ 批量插入
+#### ➤ 批量插入
 
 Pass slice data to method `Create`, GORM will generate a single SQL statement to insert all the data and backfill primary key values, hook methods will be invoked too.
 
@@ -325,12 +325,12 @@ func 批量插入() {
 }
 ```
 
-➤ [在模型中用 default 标签指定默认值](https://gorm.io/docs/create.html#Default-Values)
+#### ➤ [在模型中用 default 标签指定默认值](https://gorm.io/docs/create.html#Default-Values)
 
 如果插入记录时 Age 字段是零值,  就会用 default 标签设置的默认值  
 注意如果数据库中为 age 设了默认值,  那么模型中的 Age 字段也要加上 default 标签,  否则很容易插入零值
 
-➤ [Upsert](https://gorm.io/docs/create.html#Upsert-On-Conflict)
+#### ➤ [Upsert](https://gorm.io/docs/create.html#Upsert-On-Conflict)
 
 ```go
 func Upsert() {
@@ -353,7 +353,7 @@ func Upsert() {
 }
 ```
 
-➤ [返回首个匹配的记录、没有则创建一条新纪录](https://gorm.io/docs/advanced_query.html#FirstOrCreate)
+#### ➤ [返回首个匹配的记录、没有则创建一条新纪录](https://gorm.io/docs/advanced_query.html#FirstOrCreate)
 
 ```go
 func FirstOrCreate() {
@@ -371,7 +371,7 @@ func FirstOrCreate() {
 // FirstOrCreate 也支持用 Assign 做插入或更新,  这与 on duplicate key update ... 的区别是使用了两条 sql
 ```
 
-➤ 进阶内容
+#### ➤ 进阶内容
 
 1. 可以不用结构体,  [而是用 Map 描述插入的记录](https://gorm.io/docs/create.html#Create-From-Map)
 2. [如果插入记录时需要用到 uuid() 这样的 SQL 函数](https://gorm.io/docs/create.html#Create-From-SQL-Expr-Context-Valuer)
@@ -408,7 +408,7 @@ func FirstAndFind() {
 
 ### 使用 Where 条件
 
-➤ String 条件
+#### ➤ String 条件
 
 ```go
 func String_条件() {
@@ -423,7 +423,7 @@ func String_条件() {
 }
 ```
 
-➤ Struct & Map 条件
+#### ➤ Struct & Map 条件
 
 ```go
 func Struct_Map_条件() {
@@ -437,14 +437,14 @@ func Struct_Map_条件() {
 }
 ```
 
-➤ 条件可以直接写在 First、Find 中
+#### ➤ 条件可以直接写在 First、Find 中
 
 ```go
 // 上面的提到的条件都可以直接写在 First、Last、Take、Find 中:  
 db.Find(&cs, "name = ? AND `from` = ?", "Homura", "Xenoblade 2") // 这里用 `from` 转义 sql 关键字
 ```
 
-➤ Not 条件
+#### ➤ Not 条件
 
 ```go
 func Not_条件() {
@@ -457,7 +457,7 @@ func Not_条件() {
 }
 ```
 
-➤ Or 条件
+#### ➤ Or 条件
 
 ```go
 func Or_条件() {
@@ -471,7 +471,7 @@ func Or_条件() {
 
 ### 使用分组条件
 
-➤ `c1.Where(c2)` 会为 c2 加括号,  然后用 `AND` 连接 c1 和 c2
+#### ➤ `c1.Where(c2)` 会为 c2 加括号,  然后用 `AND` 连接 c1 和 c2
 
 ```go
 func c1_Where_c2() {
@@ -483,7 +483,7 @@ func c1_Where_c2() {
 }
 ```
 
-➤ `db.Where(c1).Or(c2)` 会为 c1 和 c2 加上括号,  并用 `OR` 连接两个条件
+#### ➤ `db.Where(c1).Or(c2)` 会为 c1 和 c2 加上括号,  并用 `OR` 连接两个条件
 
 ```go
 func Where_c1_c2() {
@@ -497,7 +497,7 @@ func Where_c1_c2() {
 
 ### 选择特定字段
 
-➤ 默认会用 SELECT * 选择全部字段,  用 Select() 选择特定字段
+#### ➤ 默认会用 SELECT * 选择全部字段,  用 Select() 选择特定字段
 
 ```go
 func 选择特定字段() {
@@ -508,7 +508,7 @@ func 选择特定字段() {
 }
 ```
 
-➤ 可以用另一个结构体表示选择的字段
+#### ➤ 可以用另一个结构体表示选择的字段
 
 ```go
 type CharacterInfo struct {
@@ -525,7 +525,7 @@ func UseStructAsSelect() {
 
 ### Order、Limit、Group
 
-➤ Order、Limit、Offset
+#### ➤ Order、Limit、Offset
 
 ```go
 func Order_Limit_Offset() {
@@ -612,7 +612,7 @@ func 分页器() {
 
 ### 各种更新方式
 
-➤ 保存所有字段、或插入新记录
+#### ➤ 保存所有字段、或插入新记录
 
 ```go
 func db_Save() {
@@ -627,7 +627,7 @@ func db_Save() {
 }
 ```
 
-➤ 更新单列、更新多列、批量更新
+#### ➤ 更新单列、更新多列、批量更新
 
 ```go
 func UpdateSingleColumn() {
@@ -653,7 +653,7 @@ func 批量更新() {
 }
 ```
 
-➤ 更新选定字段
+#### ➤ 更新选定字段
 
 ```go
 func UpdateSelected() {
@@ -664,7 +664,7 @@ func UpdateSelected() {
 }
 ```
 
-➤ 更新操作支持 BeforeSave、BeforeUpdate、AfterSave、AfterUpdate 等 [钩子函数](https://gorm.io/zh_CN/docs/hooks.html)
+#### ➤ 更新操作支持 BeforeSave、BeforeUpdate、AfterSave、AfterUpdate 等 [钩子函数](https://gorm.io/zh_CN/docs/hooks.html)
 
 ```go
 func (u *User) BeforeUpdate(tx *gorm.DB) (err error) {
@@ -686,7 +686,7 @@ func (u *User) BeforeUpdate(tx *gorm.DB) (err error) {
 
 ### 删除相关
 
-➤ 例子
+#### ➤ 例子
 
 ```go
 func DeleteRecord() {
@@ -699,15 +699,15 @@ func DeleteRecord() {
 }
 ```
 
-➤ [查找被软删除的记录](https://gorm.io/zh_CN/docs/delete.html#%E6%9F%A5%E6%89%BE%E8%A2%AB%E8%BD%AF%E5%88%A0%E9%99%A4%E7%9A%84%E8%AE%B0%E5%BD%95)
+#### ➤ [查找被软删除的记录](https://gorm.io/zh_CN/docs/delete.html#%E6%9F%A5%E6%89%BE%E8%A2%AB%E8%BD%AF%E5%88%A0%E9%99%A4%E7%9A%84%E8%AE%B0%E5%BD%95)
 
-➤ [永久删除](https://gorm.io/zh_CN/docs/delete.html#%E6%B0%B8%E4%B9%85%E5%88%A0%E9%99%A4) 
+#### ➤ [永久删除](https://gorm.io/zh_CN/docs/delete.html#%E6%B0%B8%E4%B9%85%E5%88%A0%E9%99%A4) 
 
 ## 原生 SQL
 
 ### Raw 和 Exec
 
-➤ 可以自行比较原生 SQL 和 db.Where(),  看哪一套语法更好
+#### ➤ 可以自行比较原生 SQL 和 db.Where(),  看哪一套语法更好
 
 ```go
 func RawQuery() {
@@ -829,7 +829,7 @@ func 带关联的查询与创建() {
 }
 ```
 
-➤ [如果外键名恰好在拥有者类型中存在，GORM 通常会错误的认为它是 has one 关系](https://gorm.io/zh_CN/docs/belongs_to.html#%E9%87%8D%E5%86%99%E5%BC%95%E7%94%A8) (好 TM 难看懂啊...)
+#### ➤ [如果外键名恰好在拥有者类型中存在，GORM 通常会错误的认为它是 has one 关系](https://gorm.io/zh_CN/docs/belongs_to.html#%E9%87%8D%E5%86%99%E5%BC%95%E7%94%A8) (好 TM 难看懂啊...)
 
 ### Has One 与 Belongs To
 
@@ -881,7 +881,7 @@ func ManyToMany关联查询() {
 
 ### 关联查询与关联创建
 
-➤ 会自动创建数据和关联
+#### ➤ 会自动创建数据和关联
 
 ```go
 func 自动创建数据和关联() {
@@ -893,7 +893,7 @@ func 自动创建数据和关联() {
 }
 ```
 
-➤ 可以用 `Preload`、`Joins`、`Association` 加载关联数据,  `Preload` 还支持 [自定义预加载 SQL](https://gorm.io/zh_CN/docs/preload.html#%E8%87%AA%E5%AE%9A%E4%B9%89%E9%A2%84%E5%8A%A0%E8%BD%BD-SQL)
+#### ➤ 可以用 `Preload`、`Joins`、`Association` 加载关联数据,  `Preload` 还支持 [自定义预加载 SQL](https://gorm.io/zh_CN/docs/preload.html#%E8%87%AA%E5%AE%9A%E4%B9%89%E9%A2%84%E5%8A%A0%E8%BD%BD-SQL)
 
 ```go
 func 查找关联数据() {
@@ -922,7 +922,7 @@ func 查找关联数据() {
 }
 ```
 
-➤ 添加关联数据
+#### ➤ 添加关联数据
 
 1. `Append()` 为 many to many、has many 添加新的关联数据；为 has one, belongs to 替换当前的关联数据
 
@@ -941,7 +941,7 @@ func 添加关联数据() {
 
 ### 使用 Context
 
-➤ 例子
+#### ➤ 例子
 
 ```go
 func UseContext() {
@@ -962,9 +962,9 @@ func UseContext() {
 }
 ```
 
-➤ 可以在钩子函数例如 `BeforeCreate` 中[访问 Context 对象](https://gorm.io/zh_CN/docs/context.html#Hooks-x2F-Callbacks-%E4%B8%AD%E7%9A%84-Context)
+#### ➤ 可以在钩子函数例如 `BeforeCreate` 中[访问 Context 对象](https://gorm.io/zh_CN/docs/context.html#Hooks-x2F-Callbacks-%E4%B8%AD%E7%9A%84-Context)
 
-➤ [可以写一个中间件](https://gorm.io/zh_CN/docs/context.html#Chi-%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%A4%BA%E4%BE%8B)、为一个请求中的所有 database 操作设置总的超时时间
+#### ➤ [可以写一个中间件](https://gorm.io/zh_CN/docs/context.html#Chi-%E4%B8%AD%E9%97%B4%E4%BB%B6%E7%A4%BA%E4%BE%8B)、为一个请求中的所有 database 操作设置总的超时时间
 
 ### 别忘了处理错误
 
@@ -989,7 +989,7 @@ func DontForgetErrorHandling() {
 
 ### GORM Session 相关
 
-➤ 如果想固定一部分查询条件,  需要新建 Session
+#### ➤ 如果想固定一部分查询条件,  需要新建 Session
 
 ```go
 func NewGormSession() {
@@ -1009,7 +1009,7 @@ func NewGormSession() {
 }
 ```
 
-➤ [GORM Session 有若干配置项](https://gorm.io/zh_CN/docs/session.html)
+#### ➤ [GORM Session 有若干配置项](https://gorm.io/zh_CN/docs/session.html)
 
 1. DryRun 用于检查生成的 SQL,  `stmt := db.Session(&gorm.Session{DryRun: true}).First(&user, 1).Statement`
 2. 可以开启 PrepareStmt, 能提高一点效率,  [MySQL Prepared Statements](https://dev.mysql.com/doc/refman/5.7/en/sql-prepared-statements.html)
@@ -1017,27 +1017,27 @@ func NewGormSession() {
 
 ### 钩子函数
 
-➤ [参考文档](https://gorm.io/zh_CN/docs/hooks.html)
+#### ➤ [参考文档](https://gorm.io/zh_CN/docs/hooks.html)
 
 > 1. Hook 是在创建、查询、更新、删除等操作之前/之后调用的函数。  
 >    如果您已经为模型定义了指定的方法，它会在创建、更新、查询、删除时自动被调用。
 > 2. 如果任何回调返回错误，GORM 将停止后续的操作并回滚事务。  
 > 3. 钩子方法的函数签名应该是 `func(*gorm.DB) error`
 
-➤ BeforeCreate 和 BeforeSave 的区别?
+#### ➤ BeforeCreate 和 BeforeSave 的区别?
 
 文档上也没写...,  Save/Create 这两个相近的词,  难道没有人好奇他们的区别吗?  
 尝试找不同: BeforeSave 在创建和更新时都会调用,  BeforeCreate 只在创建时起作用
 
-➤ 可以用 `Set/Get` 方法[往钩子函数传值](https://gorm.io/zh_CN/docs/settings.html)
+#### ➤ 可以用 `Set/Get` 方法[往钩子函数传值](https://gorm.io/zh_CN/docs/settings.html)
 
 ### 自定义数据类型
 
-➤ 注意 [gorm.io/datatypes](https://github.com/go-gorm/datatypes) 提供了 JSON、Time 数据类型的支持
+#### ➤ 注意 [gorm.io/datatypes](https://github.com/go-gorm/datatypes) 提供了 JSON、Time 数据类型的支持
 
-➤ 可以实现 Scanner 和 Valuer 两个接口,  [自定义一个类型如何序列化到 database](https://gorm.io/zh_CN/docs/data_types.html)
+#### ➤ 可以实现 Scanner 和 Valuer 两个接口,  [自定义一个类型如何序列化到 database](https://gorm.io/zh_CN/docs/data_types.html)
 
-➤ 注意 GORM 提供了 json 序列化器把结构体保存为 json 字符串
+#### ➤ 注意 GORM 提供了 json 序列化器把结构体保存为 json 字符串
 
 ```go
 type Name struct {
@@ -1059,11 +1059,11 @@ func 使用json序列化器() {
 
 ### 用 Scopes 封装查询
 
-➤ [封装一些常用的查询条件以方便复用](https://gorm.io/zh_CN/docs/scopes.html#%E6%9F%A5%E8%AF%A2)
+#### ➤ [封装一些常用的查询条件以方便复用](https://gorm.io/zh_CN/docs/scopes.html#%E6%9F%A5%E8%AF%A2)
 
-➤ [用 Scopes 实现分页器、动态选择表名](https://gorm.io/zh_CN/docs/scopes.html#%E5%88%86%E9%A1%B5)
+#### ➤ [用 Scopes 实现分页器、动态选择表名](https://gorm.io/zh_CN/docs/scopes.html#%E5%88%86%E9%A1%B5)
 
-➤ [用 Scopes 查到关联的数据, 然后添加筛选条件](https://gorm.io/zh_CN/docs/scopes.html#%E6%9B%B4%E6%96%B0)
+#### ➤ [用 Scopes 查到关联的数据, 然后添加筛选条件](https://gorm.io/zh_CN/docs/scopes.html#%E6%9B%B4%E6%96%B0)
 
 ## 事务操作
 
@@ -1123,7 +1123,7 @@ func 嵌套事务() {
 
 ### 手动事务
 
-➤ 不完整的例子
+#### ➤ 不完整的例子
 
 ```go
 func 手动事务() {
@@ -1146,7 +1146,7 @@ func 手动事务() {
 }
 ```
 
-➤ 完整的例子
+#### ➤ 完整的例子
 
 ```go
 func 手动事务_完整例子() (err error) {
@@ -1187,7 +1187,7 @@ func 手动事务_完整例子() (err error) {
 }
 ```
 
-➤ 另外[手动的嵌套事务](https://gorm.io/zh_CN/docs/transactions.html#SavePoint%E3%80%81RollbackTo)可以用 `SavePoint`、`RollbackTo` 两个方法
+#### ➤ 另外[手动的嵌套事务](https://gorm.io/zh_CN/docs/transactions.html#SavePoint%E3%80%81RollbackTo)可以用 `SavePoint`、`RollbackTo` 两个方法
 
 ## 数据库连接池
 
@@ -1201,11 +1201,11 @@ When Go reuses an idle connection from the pool, any problems with the connectio
 
 ### GORM 连接池
 
-➤ [参考文档](https://gorm.io/zh_CN/docs/generic_interface.html#%E8%BF%9E%E6%8E%A5%E6%B1%A0)
+#### ➤ [参考文档](https://gorm.io/zh_CN/docs/generic_interface.html#%E8%BF%9E%E6%8E%A5%E6%B1%A0)
 
 ### 理解连接池设置
 
-➤ SetMaxOpenConns()
+#### ➤ SetMaxOpenConns()
 
 The `SetMaxOpenConns()` method allows you to set an upper `MaxOpenConns` limit on the number of ‘open’ connections (in-use + idle connections) in the pool. By default, the number of open connections is unlimited.  
 
@@ -1213,22 +1213,22 @@ But leaving it unlimited isn’t necessarily the best thing to do. *By default P
 
 But setting a limit comes with an important caveat. If the `MaxOpenConns` limit is reached, and all connections are in-use, then any further database tasks will be forced to wait until a connection becomes free and marked as idle. In the context of our API, the user’s HTTP request could ‘hang’ indefinitely while waiting for a free connection. So to mitigate this, it’s important to *always set a timeout on database tasks* using a `context.Context` object.
 
-➤ SetMaxIdleConns()
+#### ➤ SetMaxIdleConns()
 
 The `SetMaxIdleConns()` method sets an upper `MaxIdleConns` limit on the number of idle connections in the pool. By default, the maximum number of idle connections is 2. By default MySQL will automatically close any connections which haven’t been used for 8 hours. So, potentially, setting `MaxIdleConns` too high may result in more connections becoming unusable and more memory resources being used than if you had a smaller idle connection pool.
 
-➤ SetConnMaxLifetime()
+#### ➤ SetConnMaxLifetime()
 
 The `SetConnMaxLifetime()` method sets the `ConnMaxLifetime` limit — the maximum length of time that a connection can be reused for. By default, there’s no maximum lifetime and connections will be reused forever. If we set `ConnMaxLifetime` to one hour, for example, it means that all connections will be marked as ‘expired’ one hour after they were first created, and cannot be reused after they’ve expired.
 
-➤ SetConnMaxIdleTime()
+#### ➤ SetConnMaxIdleTime()
 
 The `SetConnMaxIdleTime()` method sets the `ConnMaxIdleTime` limit. By default there’s no limit.  If we set `ConnMaxIdleTime` to 1 hour, for example, any connections that have sat idle in the pool for 1 hour since last being used will be marked as expired and removed by the background cleanup operation.
 
-➤ 怎么配这些参数? 需要 benchmark!
+#### ➤ 怎么配这些参数? 需要 benchmark!
 
 For this project we’ll set a `MaxOpenConns` limit of 25 connections. I’ve found this to be a reasonable starting point for small-to-medium web applications and APIs, but ideally you should tweak this value for your hardware depending on the results of *benchmarking and load-testing*.  
 
 ### 数据库负载均衡
 
-➤ [参考文档](https://gorm.io/zh_CN/docs/dbresolver.html)
+#### ➤ [参考文档](https://gorm.io/zh_CN/docs/dbresolver.html)

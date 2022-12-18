@@ -16,19 +16,19 @@
 
 ### Race Condition
 
-➤ race condition 是指什么问题 ?
+#### ➤ race condition 是指什么问题 ?
 
 1. 程序的输出是随机的、不确定的
 
 2. 取决于哪个子过程先执行、哪个子过程跑得快 (也就是取决于运气)
 
-➤ 为什么会出现 race condition ?
+#### ➤ 为什么会出现 race condition ?
 
 A race condition occurs when two or more operations must execute in the correct order,  
 but the program has not been written so that this order is guaranteed to be maintained.  
 两个操作必须以正确的顺序先后执行,  但程序中忘了编写代码来确保执行顺序
 
-➤ 一个 race condition 例子
+#### ➤ 一个 race condition 例子
 
 ```go
 func main() {
@@ -44,7 +44,7 @@ func main() {
 }
 ```
 
-➤ 这段程序的输出有三种可能:
+#### ➤ 这段程序的输出有三种可能:
 
 1. 不打印任何东西,  在第一次读取 data 前把 data 改成了 1
 2. 打印了 0,  在第二次读取 data 后才修改 data
@@ -53,11 +53,11 @@ func main() {
 仅仅只是三行代码,  就能让程序的产生很多的不确定性  
 因为根本就没有写任何代码来保证执行顺序,  所以实际输出取决于运气.
 
-➤ 如果运气好 bug 也能运行,  但说不定哪天就挂了
+#### ➤ 如果运气好 bug 也能运行,  但说不定哪天就挂了
 
 Race conditions are one of the most insidious types of concurrency bugs because they may not show up until years after the code has been placed into production. They are usually precipitated by a change in the environment the code is executing in, or an unprecedented occurrence. In these cases, the code seems to be behaving correctly, but in reality, there’s just a very high chance that the operations will be executed in order. Sooner or later, the program will have an unintended consequence.  
 
-➤ 什么是 data race ? 存在什么问题 ?
+#### ➤ 什么是 data race ? 存在什么问题 ?
 
 像上面的代码, 两个线程同时读写同一块数据,  就叫做 data race,  对读取线程而言、data race 存在如下问题:
 
@@ -90,13 +90,13 @@ func (c *Counter) Get() (int, int) {
 }
 ```
 
-➤ 什么是原子性?
+#### ➤ 什么是原子性?
 
 1. 看不到中间状态,  只能看到 `Inc` 执行前/执行后的状态,  `Get` 不可能返回 c.one 为 10 这样的临时/中间状态
 2. 一次只能由一个线程进行操作,  例如读的时候不允许其他线程进行读取/修改、`Get/Get`、`Get/Inc`、`Inc/Inc` 之间都是互斥的
 3. 要么全都成功、要么全都失败,  如果执行 `Inc` 时发生异常,  相关数据应该回到 `Inc` 之前的状态
 
-➤ 所以怎么判断原子性? 
+#### ➤ 所以怎么判断原子性? 
 
 假设 increment() 函数涉及了 a、b、c 三个变量,  
 如果 increment() 函数执行时,  不可能有其他线程同时读取或修改 a、b、c 变量  
@@ -109,7 +109,7 @@ func (c *Counter) Get() (int, int) {
 
 Let’s say we have a data race: two concurrent processes are attempting to access the same area of memory, and the way they are accessing the memory is not atomic. If there is a data race and the output of the program will be completely nondeterministic.
 
-➤ 以独占形式访问共享资源、的一小段代码叫做临界区
+#### ➤ 以独占形式访问共享资源、的一小段代码叫做临界区
 
 In fact, there’s a name for a section of your program that needs exclusive access to a shared resource. This is called a critical section. There are various ways to guard your program’s critical sections, and Go has some better ideas on how to deal with this, but one way to solve this problem is to synchronize access to the memory between your critical sections.
 
@@ -134,7 +134,7 @@ func 加锁保护临界区() {
 }
 ```
 
-➤ 任何时候访问临界资源都要记得加锁、否则会失去临界区的互斥性/独占性
+#### ➤ 任何时候访问临界资源都要记得加锁、否则会失去临界区的互斥性/独占性
 
 In this example we’ve created a convention for developers to follow. Anytime developers want to access the `data` variable’s memory, they must first call `Lock`, and when they’re finished they must call `Unlock`. Code between those two statements can then assume it has exclusive access to data; we have successfully synchronized access to the memory. Also note that if developers don’t follow this convention, we have no guarantee of exclusive access!   
 
@@ -146,16 +146,16 @@ In this example we’ve created a convention for developers to follow. Anytime d
 
 It is true that you can solve some problems by synchronizing access to the memory, but as we just saw, it doesn’t automatically solve data races or logical correctness. Further, it can also create maintenance and performance problems.  
 
-➤ 维护性
+#### ➤ 维护性
 
 Note that earlier we mentioned that we had created a convention for declaring we needed exclusive access to some memory. Conventions are great, but they’re also easy to ignore. By synchronizing access to the memory in this manner, you are counting on all other developers to follow the same convention now and into the future.  
 
-➤ 性能问题
+#### ➤ 性能问题
 
 Synchronizing access to the memory in this manner also has performance issue.  
 The calls to Lock can make our program slow. 
 
-➤ 复杂性
+#### ➤ 复杂性
 
 - What size should my critical sections be?  
 - Are my critical sections entered and exited repeatedly? (注意 sync.Mutex 不是可重入锁)

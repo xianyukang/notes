@@ -47,13 +47,13 @@ Put very simply, a goroutine is a function that is running concurrently (remembe
 
 ### 协程/线程/调度器
 
-➤ Goroutine 是一种协程
+#### ➤ Goroutine 是一种协程
 
 Goroutines are not OS threads, they’re a higher level of abstraction known as coroutines. Coroutines are simply concurrent subroutines (functions, closures, or methods in Go) that are nonpreemptive—that is, they cannot be interrupted. Instead, coroutines *have multiple points throughout which allow for suspension or reentry*.  
 
 What makes goroutines unique to Go are their deep integration with Go’s runtime. Goroutines don’t define their own suspension or reentry points; Go’s runtime observes the runtime behavior of goroutines and automatically suspends them when they block and then resumes them when they become unblocked.
 
-➤ 调度器把 Goroutine 分配到线程上执行、把阻塞的 Goroutine 换成其他可执行的 Goroutine
+#### ➤ 调度器把 Goroutine 分配到线程上执行、把阻塞的 Goroutine 换成其他可执行的 Goroutine
 
 Note that concurrency is not a property of a coroutine: something must host several coroutines simultaneously and give each an opportunity to execute—otherwise, they wouldn’t be concurrent!   
 
@@ -186,13 +186,13 @@ func 使用读写锁() {
 
 ### Cond
 
-➤ Cond 表示一个用于等待的事件
+#### ➤ Cond 表示一个用于等待的事件
 
 The comment for the `sync.Cond` type really does a great job of describing its purpose: ①a rendezvous point for goroutines waiting for ②announcing the occurrence of an event.  
 
 In that definition, an “event” is any arbitrary signal between two or more goroutines that carries no information other than the fact that it has occurred. Very often you’ll want to wait for one of these signals before continuing execution on a goroutine. 
 
-➤ 为什么用轮询模拟 Cond 不太好
+#### ➤ 为什么用轮询模拟 Cond 不太好
 
 If we were to look at how to accomplish this without the Cond type, one naive approach to doing this is to use an infinite loop:  
 
@@ -204,7 +204,7 @@ for condition() == false {
 
 You have to figure out how long to sleep for: too long, and you’re artificially degrading performance; too short, and you’re unnecessarily consuming too much CPU time. It would be better if there were some kind of way for a goroutine to efficiently sleep until it was signaled to wake and check its condition. This is exactly what the Cond type does for us.
 
-➤ 一个例子
+#### ➤ 一个例子
 
 ```go
 func 使用Cond模拟恰饭() {
@@ -245,7 +245,7 @@ func 使用Cond模拟恰饭() {
 
 This approach is much more efficient. Note that the call to Wait doesn’t just block, it suspends the current goroutine, allowing other goroutines to run on the OS thread.   
 
-➤ Wait 函数的执行细节
+#### ➤ Wait 函数的执行细节
 
 A few other things happen when you call `Wait`: 
 
@@ -254,7 +254,7 @@ A few other things happen when you call `Wait`:
 
 In my opinion, this takes a little getting used to; it’s effectively a hidden side effect of the method. It looks like we’re holding this lock the entire time while we wait for the condition to occur, but that’s not actually the case.   
 
-➤ [为什么要在循环中检查条件、然后调用 Wait ?](https://stackoverflow.com/questions/33186280/why-we-must-use-while-for-checking-race-condition-not-if)
+#### ➤ [为什么要在循环中检查条件、然后调用 Wait ?](https://stackoverflow.com/questions/33186280/why-we-must-use-while-for-checking-race-condition-not-if)
 
 (1) 存在一种名为 「 spurious wakeup 」的罕见现象,  处于 Wait 的线程会毫无理由地被唤醒.  
 但根据 Cond.Wait() 的源码注释,  Golang 不存在此现象:  
@@ -264,7 +264,7 @@ Unlike in other systems, Wait cannot return unless awoken by Broadcast or Signal
 A 线程被唤醒并不意味着 A 线程能立刻拿到锁,  有可能 B 线程抢到了锁并修改了数据,  
 所以 A 线程恢复执行后,  不能假设 「 被唤醒 -> 拿到锁 」这段时间内,  数据没有发生过变化
 
-➤ 其他注意事项
+#### ➤ 其他注意事项
 
 1. You need to make sure that `c.Broadcast` is called after your call to `c.Wait`.  
    ( 如果发通知时没人接,  这条通知会从世界上消失,  没有任何作用...
@@ -299,7 +299,7 @@ func 使用Once() {
 }
 ```
 
-➤ 两个注意事项
+#### ➤ 两个注意事项
 
 ```go
 func 可以给Do传不同的函数() {
@@ -361,12 +361,12 @@ Like a river, a channel serves as a conduit for a stream of information; values 
 
 ### 基础使用
 
-➤ 创建 channel
+#### ➤ 创建 channel
 
 Channels are a built-in type created using the make function:  `ch := make(chan int)`  
 *Like maps, channels are reference types*. When you pass a channel to a function, you are really passing a pointer to the channel. Also like maps and slices, the zero value for a channel is `nil`.
 
-➤ 读写 channel
+#### ➤ 读写 channel
 
 You read from a channel by placing the `<-` operator to the left of the channel variable, and you write to a channel by placing it to the right:  
 
@@ -377,25 +377,25 @@ ch <- b   // 把 b 的值写入 channel
 
 Each value written to a channel *can only be read once*. If multiple goroutines are reading from the same channel, a value written to the channel *will only be read by one of them*.  
 
-➤ 只读或只写的 channel 变量
+#### ➤ 只读或只写的 channel 变量
 
 It is rare for a goroutine to read and write to the same channel. (要么只负责读、要么只负责写)  
 When assigning a channel to a variable or field, or passing it to a function, use an arrow before the chan keyword (`ch <-chan int`) to indicate that the goroutine only reads from the channel. Use an arrow after the chan keyword (`ch chan<- int`) to indicate that the goroutine only writes to the channel. Doing so allows the Go compiler to ensure that a channel is only read from or written by a function. Go will implicitly convert bidirectional channels to unidirectional channels when needed.   
 
 ### Buffered Channel
 
-➤ 读写 channel 都会阻塞, 等待另一方发送/接收
+#### ➤ 读写 channel 都会阻塞, 等待另一方发送/接收
 
 By default channels are unbuffered. Every write to an open, unbuffered channel causes the writing goroutine to *pause until another goroutine reads from* the same channel. Likewise, a read from an open, unbuffered channel causes the reading goroutine to *pause until another goroutine writes to* the same channel. This means you cannot write to or read from an unbuffered channel without at least two concurrently running goroutines.  
 
-➤ 可选设置 buffer size
+#### ➤ 可选设置 buffer size
 
 Go also has buffered channels. These channels buffer a limited number of writes without blocking. If the buffer fills before there are any reads from the channel, a subsequent write to the channel pauses the writing goroutine until the channel is read. Just as writing to a channel with a full buffer blocks, reading from a channel with an empty buffer also blocks.  
 
 A buffered channel is created by specifying the capacity of the buffer: `ch := make(chan int, 10)`  
 The built-in functions len and cap return information about a buffered channel. Use `len` to find out how many values are currently in the buffer and use `cap` to find out the maximum buffer size. The capacity of the buffer cannot be changed. Passing an unbuffered channel to both len and cap returns 0. This makes sense because, by definition, an unbuffered channel doesn’t have a buffer to store values.
 
-➤ 但一般不用 buffered channel
+#### ➤ 但一般不用 buffered channel
 
 *Most of the time, you should use unbuffered channels*. Buffered channels can be useful in certain situations, but you should create them with care. Buffered channels can easily become a premature optimization and also hide deadlocks by making them more unlikely to happen.  
 
@@ -413,24 +413,24 @@ Unlike other for-range loops, there is only a single variable declared for the c
 
 ### Closing a Channel
 
-➤ 读写已经关闭的 channel 会发生什么?
+#### ➤ 读写已经关闭的 channel 会发生什么?
 
 When you are done writing to a channel, you close it using the built-in close function: `close(ch)`.  
 Once a channel is closed, any attempts to write to the channel or close the channel again *will panic*. 
 
 Interestingly, *attempting to read from a closed channel always succeeds*. If the channel is buffered and there are values that haven’t been read yet, they will be returned in order. If the channel is unbuffered or the buffered channel has no more values, the *zero value* for the channel’s type is returned. This is to allow support for multiple downstream reads from a single upstream writer on the channel.
 
-➤ 如何判断 channel 的返回值是不是 close 后返回的零值
+#### ➤ 如何判断 channel 的返回值是不是 close 后返回的零值
 
 This leads to a question that might sound familiar from our experience with maps: when we read from a channel, how do we tell *the difference between a zero value that was written and a zero value that was returned because the channel is closed?*  We have a familiar answer: we use the comma ok idiom to detect whether a channel has been closed or not:  `v, ok := <-ch`
 
 If ok is set to true, then the channel is open. If it is set to false, the channel is closed. Any time you are reading from a channel that might be closed, use the comma ok idiom to ensure that the channel is still open.  
 
-➤ 调用 close(ch) 是因为有 goroutine 在等待 channel 被关闭
+#### ➤ 调用 close(ch) 是因为有 goroutine 在等待 channel 被关闭
 
 The responsibility for closing a channel lies with the goroutine that writes to the channel. Be aware that *closing a channel is only required if there is a goroutine waiting for the channel to close* (such as one using a for-range loop to read from the channel). Since a channel is just another variable, Go’s runtime can detect channels that are no longer used and garbage collect them.  
 
-➤ 可用 close(ch) 让多个 goroutine 结束等待,  实现 sync.Cond 的效果
+#### ➤ 可用 close(ch) 让多个 goroutine 结束等待,  实现 sync.Cond 的效果
 
 Closing a channel is also one of the ways you can *signal multiple goroutines simultaneously*. If you have n goroutines waiting on a single channel, instead of writing n times to the channel to unblock each goroutine, you can simply close the channel. Since a closed channel can be read from an infinite number of times, it doesn’t matter how many goroutines are waiting on it. We discussed using the `sync.Cond` type to perform the same behavior. You can certainly use that, but as we’ve discussed, channels are composable, so this is my favorite way to unblock multiple goroutines at the same time.
 
@@ -476,7 +476,7 @@ func ChannelOwnership() {
 }
 ```
 
-➤ 推荐用函数封装 channel
+#### ➤ 推荐用函数封装 channel
 
 Notice how the lifecycle of the resultStream channel is encapsulated within the `chanOwner` function. It’s very clear that the writes will not happen on a nil or closed channel, and that the close will always happen once. This removes a large swath of risk from our program. *I highly encourage you to do what you can in your programs to keep the scope of channel ownership small so that these things remain obvious*. If you have a channel as a member variable of a struct with numerous methods on it, it’s going to quickly become unclear how the channel will behave.  
 
@@ -509,11 +509,11 @@ Each case in a `select` is a read or a write to a channel. If a read or write is
 
 ### 同时性和随机性
 
-➤ What happens if multiple cases have channels that can be read or written?
+#### ➤ What happens if multiple cases have channels that can be read or written?
 
 *The select algorithm is simple: it picks randomly* from any of its cases that can go forward; order is unimportant; each has an equal chance of being selected. This is very different from a switch statement, which always chooses the first case that resolves to true. It also cleanly resolves the starvation problem, as no case is favored over another and all are checked at the same time.
 
-➤ 使用 channel 可能发生死锁
+#### ➤ 使用 channel 可能发生死锁
 
 Another advantage of select choosing at random is that it prevents one of *the most common causes of deadlocks: acquiring locks in an inconsistent order*. If you have two goroutines that both access the same two channels, they must be accessed in the same order in both goroutines, or they will deadlock. This means that neither one can proceed because they are waiting on each other.
 
@@ -532,7 +532,7 @@ func 使用channel可能死锁() {
 }
 ```
 
-➤ 搭配 select 和 channel 可以避免死锁
+#### ➤ 搭配 select 和 channel 可以避免死锁
 
 If we wrap the channel accesses in the main goroutine in a select, we avoid deadlock. *Because a select checks if any of its cases can proceed*, the deadlock is avoided.
 
@@ -602,7 +602,7 @@ func 通过default实现非阻塞的select(ch chan int) {
 
 Having a default case inside a for-select loop is almost always the wrong thing to do. It will be triggered every time through the loop when there’s nothing to read or write for any of the cases. This makes your for loop run constantly, which uses a great deal of CPU.  
 
-➤ 非阻塞的 for-select 循环
+#### ➤ 非阻塞的 for-select 循环
 
 - for-select-default 循环可理解为:  
 - 看一眼 channel 中有没有数据,  没有的话也不等了,  先干点其他事,  等会再回来看看  
@@ -631,15 +631,15 @@ The context package serves two primary purposes:
 
 ### 取消请求
 
-➤ 有的时候需要支持取消,  结束那些没有意义的工作
+#### ➤ 有的时候需要支持取消,  结束那些没有意义的工作
 
 Imagine that you have a request that spawns several goroutines, each one calling a different HTTP service. If one service returns an error that prevents you from returning a valid result, there is no point in continuing to process the other goroutines. In Go, this is called cancellation and the context provides the mechanism for implementation.  
 
-➤ context.WithCancel 返回新的 Context,  附带一个取消函数
+#### ➤ context.WithCancel 返回新的 Context,  附带一个取消函数
 
 To create a cancellable context, use the `context.WithCancel` function. It takes in a `context.Context` as a parameter and returns a `context.Context` and a `context.CancelFunc`. The returned context.Context is not the same context that was passed into the function. Instead, it is a child context that wraps the passed-in parent context.Context. A context.CancelFunc is a function that cancels the context, telling all of the code that’s listening for potential cancellation that it’s time to stop processing.
 
-➤ 同时调用两个服务,  若遇到错误,  则取消另一个调用
+#### ➤ 同时调用两个服务,  若遇到错误,  则取消另一个调用
 
 First, our `callBoth` function creates a cancellable context and a cancellation function from the passed-in context. It is important to remember that any time you create a cancellable context, you must call the `cancel` function. It is fine to call it more than once; every invocation after the first is ignored. We use a `defer` to make sure that it is eventually called. If you do not, your program will leak resources (memory and goroutines) and eventually slow down or crash.
 
@@ -750,19 +750,19 @@ func longRunningThing(ctx context.Context, data string) (string, error) {
 
 ### 理解 Context Chain
 
-➤ Context Chain 从 context.Background 或 context.TODO 开始
+#### ➤ Context Chain 从 context.Background 或 context.TODO 开始
 
 At the top of your asynchronous call-graph, your code probably won’t have been passed a Context. To start the chain, the context package provides you with two functions to create empty instances of Context: context.Background()、context.TODO(). `Background()` simply returns an empty Context. TODO is not meant for use in production, but also returns an empty Context; TODO’s intended purpose is to serve as a placeholder.
 
-➤ 用 context.WithTimeout 创建带超时的 context
+#### ➤ 用 context.WithTimeout 创建带超时的 context
 
 The context provides a way to control how long a request runs. The first is `context.WithTimeout`. It takes two parameters, an existing context and time.Duration that specifies the duration until the context automatically cancels. It returns a context that automatically triggers a cancellation after the specified duration as well as a cancellation function that is invoked to cancel the context immediately. The second function is `context.WithDeadline`.
 
-➤ 可以为子任务分配 timeout
+#### ➤ 可以为子任务分配 timeout
 
 When you set a time limit for the overall duration of the request, you might want to subdivide that time. And if you call another service from your service, you might want to limit how long you allow the network call to run, reserving some time for the rest of your processing or for other network calls. You control how long an individual call takes by creating a child context that wraps a parent context using context.WithTimeout or context.WithDeadline.
 
-➤ 如果 parent context 被取消,  那么 child context 会被连带取消
+#### ➤ 如果 parent context 被取消,  那么 child context 会被连带取消
 
 Any timeout that you set on *the child context is bounded by the timeout set on the parent context*; if a parent context times out in two seconds, you can declare that a child context times out in three seconds, but when the parent context times out after two seconds, so will the child.  
 
@@ -790,7 +790,7 @@ func The_Context_Interface() {
 
 ### 用 Context 存储键值对
 
-➤ 一个例子
+#### ➤ 一个例子
 
 To check if a value is in a context or any of its parents, use the `Value` method on context.Context. This method takes in a key and returns the value associated with the key. Again, both the key parameter and the value result are declared to be of type `interface{}`. If no value is found for the supplied key, `nil` is returned. Use the `comma, ok` idiom to type assert the returned value to the correct type.
 
@@ -806,7 +806,7 @@ func data_bag() {
 }
 ```
 
-➤ 为什么用自定义类型作为 context key 能减少冲突
+#### ➤ 为什么用自定义类型作为 context key 能减少冲突
 
 ```go
 func 用接口作为key() {
@@ -830,7 +830,7 @@ It also provides a way to pass per-request metadata through your program.
 
 By default, you should prefer to pass data through explicit parameters. However, there are some cases where you cannot pass data explicitly. The most common situation is an HTTP request handler and its associated middleware. As we have seen, all HTTP request handlers have two parameters, one for the request and one for the response. *If you want to make a value available to your handler in middleware, you need to store it in the context*. Some possible situations include extracting a user from a JWT (JSON Web Token) or creating a per-request GUID that is passed through multiple layers of middleware and into your handler and business logic.
 
-➤ 一个例子  
+#### ➤ 一个例子  
 `r.Context()` returns the context.Context associated with the request.  
 `r.WithContext(ctx)` returns a new request with the old request’s state combined with the supplied ctx.
 
@@ -863,7 +863,7 @@ func SomeHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-➤ 推荐在 handler 中把值取出来,  然后传给业务逻辑
+#### ➤ 推荐在 handler 中把值取出来,  然后传给业务逻辑
 
 In most cases, you want to extract the value from the context in your request handler and pass it in to your business logic explicitly. Go functions have explicit parameters and you shouldn’t use the context as a way to sneak values past the API.
 
@@ -964,12 +964,12 @@ func 等待所有goroutine结束并检查是否存在错误() {
 }
 ```
 
-➤ errgroup.Group 的几个方法
+#### ➤ errgroup.Group 的几个方法
 
 1. `SetLimit` limits the number of active goroutines in this group to at most n. A negative value indicates no limit. Any subsequent call to the `Go` method will block until it can add an active goroutine without exceeding the configured limit.
 2. `TryGo` calls the given function in a new goroutine only if the number of active goroutines in the group is currently below the configured limit. The return value reports whether the goroutine was started.
 
-➤ 等待所有子任务完成、并收集结果、处理错误
+#### ➤ 等待所有子任务完成、并收集结果、处理错误
 
 ```go
 type Result string

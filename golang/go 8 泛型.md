@@ -57,11 +57,11 @@ Adding generics clearly changes some of the advice for how to use Go idiomatical
 
 Just as `interface{}` doesn’t say anything, neither does `any`. We can only store values of any type and retrieve them. To use `==` and `!=`, we need a different type: `type Stack[T comparable] struct {...}`.  
 
-➤ 更多类型约束可以下载 golang.org/x/exp/constraints 包,  比如 constraints.Ordered 表示可比较大小:
+#### ➤ 更多类型约束可以下载 golang.org/x/exp/constraints 包,  比如 constraints.Ordered 表示可比较大小:
 
 ![image-20220801193358580](https://static.xianyukang.com/img/image-20220801193358580.png) 
 
-➤ Golang 用接口表示类型约束,  如下是 Ordered 的实现, 其中 `~string` 表示任意底层类型为 `string` 的类型:
+#### ➤ Golang 用接口表示类型约束,  如下是 Ordered 的实现, 其中 `~string` 表示任意底层类型为 `string` 的类型:
 
 ![image-20220801194059456](https://static.xianyukang.com/img/image-20220801194059456.png) 
 
@@ -119,7 +119,7 @@ Specifying a user-defined type does not give you access to the methods on the ty
 
 ### 试解释图中的问题
 
-➤ 为什么 `Scale(p, 10)` 返回的是 `[]int` 类型?
+#### ➤ 为什么 `Scale(p, 10)` 返回的是 `[]int` 类型?
 
 ![image-20220801201717300](https://static.xianyukang.com/img/image-20220801201717300.png) 
 

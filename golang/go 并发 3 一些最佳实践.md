@@ -25,7 +25,7 @@
 
 ### 把并发代码隐藏为实现细节
 
-➤ Keep Your APIs Concurrency-Free
+#### ➤ Keep Your APIs Concurrency-Free
 
 Concurrency is an implementation detail, and good API design should hide implementation details as much as possible. This allows you to change how your code works without changing how your code is invoked. Practically, this means that *you should never expose channels or mutexes* in your API’s types, functions, and methods. 
 
@@ -105,7 +105,7 @@ func for_select_循环中记得检测已关闭的_channel(done, in, in2 chan int
 
 Whenever you launch a goroutine function, you must make sure that it will eventually exit. Unlike variables, the Go runtime can’t detect that a goroutine will never be used again. If a goroutine doesn’t exit, the scheduler will still periodically give it time to do nothing, which slows down your program. *This is called a goroutine leak*.
 
-➤ 使用 Cancel 函数关闭 Goroutine
+#### ➤ 使用 Cancel 函数关闭 Goroutine
 
 The `countTo` function creates two channels, one that returns data and another for signaling done. Rather than return the done channel directly, we create a closure that closes the done channel and return the closure instead. Cancelling with a closure allows us to perform additional clean-up work, if needed.  
 
@@ -198,11 +198,11 @@ func handleTenTasks(tasks <-chan int) []int {
 }
 ```
 
-➤ 一人一个坑位,  每个 goroutine 出结果后就把结果扔到队列,  不会发生阻塞、能尽快结束 goroutine
+#### ➤ 一人一个坑位,  每个 goroutine 出结果后就把结果扔到队列,  不会发生阻塞、能尽快结束 goroutine
 
 We know exactly how many goroutines we have launched, and *we want each goroutine to exit as soon as it finishes its work*. This means we can create a buffered channel with one space for each launched goroutine, and have each goroutine write data to this goroutine without blocking. We can then loop over the buffered channel, reading out the values as they are written. When all of the values have been read, we return the results, *knowing that we aren’t leaking any goroutines*.  
 
-➤ 队列有哪些特性
+#### ➤ 队列有哪些特性
 
 带 buffer 的 channel 也就成了一个队列,  队列有哪些特性呢?
 
@@ -236,7 +236,7 @@ func timeLimit(doSomeWork func() (int, error)) (int, error) {
 
 Any time you need to limit how long an operation takes in Go, you’ll see a variation on this pattern. We have a select choosing between two cases. The first case takes advantage of the done channel pattern we saw earlier. We use the goroutine closure to assign values to `result` and `err` and to close the `done` channel. If the done channel closes first, the read from done succeeds and the values are returned. The second channel is returned by the `After` function in the time package. It has a value written to it after the specified `time.Duration` has passed. When this value is read before `doSomeWork` finishes, `timeLimit` returns the timeout error.
 
-➤ 若超时后要让 goroutine 停止无用功,  可以用 context 的超时取消
+#### ➤ 若超时后要让 goroutine 停止无用功,  可以用 context 的超时取消
 
 If we exit `timeLimit` before the goroutine finishes processing, the goroutine continues to run. We just won’t do anything with the result that it (eventually) returns. *If you want to stop work in a goroutine when you are no longer waiting for it to complete*, use context cancellation.
 
@@ -307,13 +307,13 @@ Furthermore, because of the current lack of generics in Go, sync.Map uses interf
 
 ### 什么时候 Mutex 更好用
 
-➤ 用锁不好表达数据的传递/流动
+#### ➤ 用锁不好表达数据的传递/流动
 
 If you’ve had to coordinate access to data across threads in other programming languages, you have probably used a mutex. This is short for mutual exclusion, and the job of a mutex is to limit the concurrent execution of some code or access to a shared piece of data. This protected part is called the critical section.
 
 *The main problem with mutexes is that they obscure the flow of data* through a program. When a value is passed from goroutine to goroutine over a series of channels, the data flow is clear. Access to the value is localized to a single goroutine at a time. That makes it hard to understand the order of processing. There is a saying in the Go community to describe this philosophy: “Share memory by communicating; do not communicate by sharing memory.”
 
-➤ 但在一些场景中用锁更方便
+#### ➤ 但在一些场景中用锁更方便
 
 That said, sometimes it is clearer to use a mutex, and the Go standard library includes mutex implementations for these situations. The most common case is when your goroutines read or write a shared value, but don’t process the value. We’ll first see how we would implement this using channels. 
 
@@ -378,15 +378,15 @@ func (cm ConcurrentMap1) Read(name string) (int, bool) {
 }
 ```
 
-➤ 互斥锁
+#### ➤ 互斥锁
 
 While this code works, it’s cumbersome and only allows a single reader at a time. A better approach is to use a mutex. There are two mutex implementations in the standard library, both in the sync package. The first is called `Mutex` and has two methods, `Lock` and `Unlock`. Calling Lock causes the current goroutine to pause as long as another goroutine is currently in the critical section. When the critical section is clear, the lock is acquired by the current goroutine and the code in the critical section is executed. A call to the Unlock method on the Mutex marks the end of the critical section.  
 
-➤ 读写锁
+#### ➤ 读写锁
 
 The second mutex implementation is called `RWMutex` and it allows you to have both reader locks and writer locks. While only one writer can be in the critical section at a time, reader locks are shared; multiple readers can be in the critical section at once. *The writer lock is managed with the Lock and Unlock methods, while the reader lock is managed with RLock and RUnlock methods*.
 
-➤ 用 defer 释放锁
+#### ➤ 用 defer 释放锁
 
 Any time you acquire a mutex lock, *you must make sure that you release the lock*. Use a `defer ` statement to call Unlock immediately after calling Lock or RLock:
 
@@ -417,11 +417,11 @@ func (cm *ConcurrentMap2) Read(name string) (int, bool) {
 }
 ```
 
-➤ 总而言之
+#### ➤ 总而言之
 
 If you are coordinating goroutines or tracking a value as it is transformed by a series of goroutines, use channels. If you are sharing access to a field in a struct, use mutexes. Since our map is a field in a struct and there’s no transfer of the map, using a mutex makes sense. This is a good use for a mutex only because the data is stored in-memory. When data is stored in external services, like an HTTP server or a database, don’t use a mutex to guard access to the system.  
 
-➤ sync.Mutex 不是重入锁
+#### ➤ sync.Mutex 不是重入锁
 
 Mutexes require you to do more bookkeeping. For example, you must correctly pair locks and unlocks or your programs will likely deadlock. Our example both acquires and releases the locks within the same method. Another issue is that mutexes in Go aren’t reentrant. If a goroutine tries to acquire the same lock twice, it deadlocks, waiting for itself to release the lock. This is different from languages like Java, where locks are reentrant.  
 
@@ -443,13 +443,13 @@ Do not communicate by sharing memory. Instead, share memory by communicating. Th
 
 <img src="https://static.xianyukang.com/img/image-20220522003000233.png" alt="image-20220522003000233" style="zoom:67%;" /> 
 
-➤ Are you trying to transfer ownership of data?
+#### ➤ Are you trying to transfer ownership of data?
 
 If you have a bit of code that produces a result and wants to share that result with another bit of code, what you’re really doing is transferring ownership of that data. 
 
 If you’re familiar with the concept of memory-ownership in languages that don’t support garbage collection, this is the same idea: data has an owner, and one way to make concurrent programs safe is to ensure only one concurrent context has ownership of data at a time.
 
-➤ Are you trying to guard internal state of a struct?
+#### ➤ Are you trying to guard internal state of a struct?
 
 This is a great candidate for memory access synchronization primitives, and a pretty strong indicator that you shouldn’t use channels. By using memory access synchronization primitives, you can hide the implementation detail of locking your critical section from your callers.  
 
@@ -471,7 +471,7 @@ func (c *Counter) Increment() {
 
 Remember the key word here is internal. If you find yourself exposing locks beyond a type, this should raise a red flag. Try to keep the locks constrained to a small lexical scope.  
 
-➤ Are you trying to coordinate multiple pieces of logic?
+#### ➤ Are you trying to coordinate multiple pieces of logic?
 
 Remember that channels are inherently more composable than memory access synchronization primitives. Having locks scattered throughout your object-graph sounds like a nightmare, but having channels everywhere is expected and encouraged! I can compose channels, but I can’t easily compose locks or methods that return values.  
 
@@ -481,7 +481,7 @@ You will find it much easier to control the emergent complexity that arises in y
 
 ### Channel 大小设为 0/1
 
-➤ Channel Size is One or None
+#### ➤ Channel Size is One or None
 
 Channels should usually have a size of one or be unbuffered. By default, channels are unbuffered and have a size of zero. Any other size must be subject to a high level of scrutiny. Consider how the size is determined, what prevents the channel from filling up under load and blocking writers, and what happens when this occurs.
 
@@ -489,7 +489,7 @@ Channels should usually have a size of one or be unbuffered. By default, channel
 
 ### 泄露 goroutine 问题很大
 
-➤ Don't fire-and-forget goroutines
+#### ➤ Don't fire-and-forget goroutines
 
 Goroutines are lightweight, but they're not free: at minimum, they cost memory for their stack and CPU to be scheduled. While these costs are small for typical uses of goroutines, they can cause significant performance issues when spawned in large numbers without controlled lifetimes. Goroutines with unmanaged lifetimes can also cause other issues like preventing unused objects from being garbage collected and holding onto resources that are otherwise no longer used.
 
@@ -539,16 +539,16 @@ Try to keep concurrent code simple enough that goroutine lifetimes are obvious. 
 
 ### 等待 goroutine 结束
 
-➤ App Exits With Active Goroutines
+#### ➤ App Exits With Active Goroutines
 
 The app will not wait for all your goroutines to complete. This is a common mistake for beginners in general. Everybody starts somewhere, so there's no shame in making rookie mistakes :-)
 
-➤ 解决办法
+#### ➤ 解决办法
 
 1. One of the most common solutions is to use a "WaitGroup" variable. It will allow the main goroutine to wait until all worker goroutines are done.
 2. Another option is to close a channel all workers are receiving from. It's a simple way to signal all goroutines at once.
 
-➤ 一个例子
+#### ➤ 一个例子
 
 ```go
 func main() {
@@ -601,7 +601,7 @@ func safelyDo(workerID int, task interface{}, f func()) {
 }
 ```
 
-➤ [可以封装 Worker 的创建和取消](https://github.com/uber-go/guide/blob/master/style.md#no-goroutines-in-init)
+#### ➤ [可以封装 Worker 的创建和取消](https://github.com/uber-go/guide/blob/master/style.md#no-goroutines-in-init)
 
 If a package has need of a background goroutine, it must expose an object that is responsible for managing a goroutine's lifetime. The object must provide a method (`Close`, `Stop`, `Shutdown`, etc) that signals the background goroutine to stop, and waits for it to exit.
 

@@ -78,11 +78,11 @@ Given all of these choices, you might wonder when you should use each of them. T
 <font color='#D05'>A floating point number cannot represent a decimal value exactly</font>.  
 <font color='#D05'>Do not use them to represent money or any other value that must have an exact decimal representation!</font>
 
-➤ 整数除以 0 会 panic, 但浮点数除以 0 不会 panic、且有三种返回值
+#### ➤ 整数除以 0 会 panic, 但浮点数除以 0 不会 panic、且有三种返回值
 
 Floating point division has a couple of interesting properties. Dividing a nonzero floating point variable by 0 returns `+Inf` or `-Inf` (positive or negative infinity), depending on the sign of the number. Dividing a floating point variable set to 0 by 0 returns `NaN` (Not a Number).
 
-➤ 无论用什么编程语言,  比较浮点数都不能用 `==`、`!=`
+#### ➤ 无论用什么编程语言,  比较浮点数都不能用 `==`、`!=`
 
 While Go lets you use == and != to compare floats, don’t do it. Due to the inexact nature of floats, two floating point values might not be equal when you think they should be. Instead, define a maximum allowed variance and see if the difference between two floats is less than that.
 
@@ -114,11 +114,11 @@ Every slice has a `capacity`, which is the number of consecutive memory location
 
 If you try to add additional values when the length equals the capacity, the `append` function uses the Go runtime to allocate a new slice with a larger capacity. The values in the original slice are copied to the new slice, the new values are added to the end, and the new slice is returned.
 
-➤ 为什么 append 后要赋值给原变量
+#### ➤ 为什么 append 后要赋值给原变量
 
 ![image-20220511133850765](https://static.xianyukang.com/img/image-20220511133850765.png) 
 
-➤ 切片容量增长策略
+#### ➤ 切片容量增长策略
 
 The rules as of Go 1.14 are to double the size of the slice when the capacity is less than 1,024 and then grow by at least 25% afterward. If you know how many things you plan to put into a slice, create the slice with the correct initial capacity. We do that with the `make` function.
 
@@ -159,17 +159,17 @@ z[0] = 333                   // 修改 z[0] 会同时影响 x,y,z 三个切片
 
 ![image-20220511163518149](https://static.xianyukang.com/img/image-20220511163518149.png) 
 
-➤ 为什么 y 的容量是 4 而不是 2
+#### ➤ 为什么 y 的容量是 4 而不是 2
 
 Whenever you take a slice from another slice, the subslice’s capacity is set to the capacity of the original slice, minus the offset of the subslice within the original slice.  
 对于 y 切片来说,  源切片的容量是 4,  y 在源切片中的偏移量为 0,  所以容量为 4 - 0 = 4
 
-➤ 为什么往 append(y, 30) 会导致 x 变化
+#### ➤ 为什么往 append(y, 30) 会导致 x 变化
 
 y 的长度为 2 容量为 4,  所以往 y 中添加元素时无需创建更大的数组,  把 30 放在索引 2 就行了  
 因为 y 和 x 共享同一个底层数组,  所以 x 中索引为 2 的元素也会变成 30
 
-➤ full slice expression
+#### ➤ full slice expression
 
 *To avoid complicated slice situations, you should either never use append with a sub-slice or make sure that append doesn’t cause an overwrite by using a full slice expression*. 
 
@@ -193,7 +193,7 @@ If you need to create a slice that’s independent of the original, use the buil
 
 ### 拼接两个切片
 
-➤ [参考回答](https://stackoverflow.com/a/58726780)
+#### ➤ [参考回答](https://stackoverflow.com/a/58726780)
 
 可以用 `c := append(a, b...)` 但这并不像 `a := append(a, b...)` 那样安全  
 因为 a 和 c 可能使用同一底层数组,  替换 a 中元素、或往 a 添加元素、都会影响到 c
@@ -208,7 +208,7 @@ func main() {
 }
 ```
 
-➤ 可以自己写个 `Append` 函数
+#### ➤ 可以自己写个 `Append` 函数
 
 ```go
 func Append(a, b []int) []int {
@@ -304,7 +304,7 @@ but attempts to write to a `nil` map will cause a runtime panic; don't do that.
 You can use `make` to create a map with a default size: `ages := make(map[int]string, 10)`  
 Maps created with `make` still have a length of 0, and they can grow past the initially specified size.  
 
-➤ Map Key 必须是可比较的类型
+#### ➤ Map Key 必须是可比较的类型
 
 The key for a map can be any comparable type. Go doesn’t require (or even allow) you to define your own hash algorithm or equality definition. Instead, the Go runtime that’s compiled into every Go program has code that implements hash algorithms for all types that are allowed to be keys.  
 
@@ -370,21 +370,21 @@ There are two common situations where anonymous structs are handy.
 
 ![image-20220510205008434](https://static.xianyukang.com/img/image-20220510205008434.png) 
 
-➤ `new(Point)` 和 `&Point{}` 都能返回指针, 他们有什么区别?
+#### ➤ `new(Point)` 和 `&Point{}` 都能返回指针, 他们有什么区别?
 
 [参考: Is there a difference between new() and "regular" allocation?](https://stackoverflow.com/questions/13244947/is-there-a-difference-between-new-and-regular-allocation)  
 `new()` is the only way to get a pointer to an unnamed integer or other basic type.   
 You can write `p := new(int)` but you can't write `p := &int{0}`. Other than that, it's a matter of preference.
 
-➤ `new` 并不负责初始化
+#### ➤ `new` 并不负责初始化
 
 `new` is a built-in function that allocates memory, but unlike its namesakes in some other languages it does not *initialize* the memory, it only *zeros* it. That is, `new(T)` allocates zeroed storage for a new item of type `T` and returns its address, a value of type `*T`.
 
-➤ 尽量让类型的零值直接可用
+#### ➤ 尽量让类型的零值直接可用
 
 Since the memory returned by `new` is zeroed, it's helpful to arrange when designing your data structures that the zero value of each type can be used without further initialization. This means a user of the data structure can create one with `new` and get right to work. For example, the documentation for `bytes.Buffer` states that "the zero value for `Buffer` is an empty buffer ready to use." Similarly, `sync.Mutex` does not have an explicit constructor or `Init` method. Instead, the zero value for a `sync.Mutex` is defined to be an unlocked mutex. Sometimes the zero value isn't good enough and an initializing constructor is necessary.
 
-➤ new 与 make 的区别
+#### ➤ new 与 make 的区别
 
 `make` applies only to maps, slices and channels and does not return a pointer.
 
@@ -418,13 +418,13 @@ var p *[]int = new([]int)       // Unnecessarily complex:
 
 **Pointers indicate mutable parameters**. That said, you should be careful when using pointers in Go. As discussed earlier, they make it harder to understand data flow and can create extra work for the garbage collector.
 
-➤ 总而言之指针有三个内涵:
+#### ➤ 总而言之指针有三个内涵:
 
 1. 数据会被修改
 2. 是同一个对象、不是拷贝后的对象 
 3. 减少巨型对象拷贝、提升性能 (偶尔会遇到大对象)
 
-➤ Pointer Passing Performance
+#### ➤ Pointer Passing Performance
 
 If a struct is large enough, there are performance improvements from using a pointer to the struct as either an input parameter or a return value. For the vast majority of cases, the difference between using a pointer and a value won’t affect your program’s performance. But if you are passing megabytes of data between functions, consider using a pointer even if the data is meant to be immutable.
 
@@ -445,18 +445,18 @@ Resist the temptation to use a pointer field to indicate no value. While a point
 
 ### 栈/堆上分配
 
-➤ 为什么栈上分配效率高
+#### ➤ 为什么栈上分配效率高
 
 Allocating memory on the stack is fast and simple. A stack pointer tracks the last location where memory was allocated; allocating additional memory is done by moving the stack pointer. When a function is invoked, a new stack frame is created for the function’s data. *Local variables are stored on the stack, along with parameters passed into a function*. When a function exits, its return values are copied back to the calling function via the stack and the stack pointer is moved back to the beginning of the stack frame for the exited function, deallocating all of the stack memory that was used by that function’s local variables and parameters.  
 
 ①因为栈是一块连续的内存,  所以内存访问效率高.  
 ②因为函数退出后栈中所有数据都变成垃圾,  不涉及复杂的垃圾收集算法,  所以垃圾回收效率高.
 
-➤ 什么东西在栈上分配
+#### ➤ 什么东西在栈上分配
 
 To store something on the stack, you have to know exactly how big it is at compile time. When you look at the *value types in Go (primitive values, arrays, and structs)*, they all have one thing in common: we know exactly how much memory they take at compile time. Because their sizes are known, they can be allocated on the stack instead of the heap.
 
-➤ `new(obj)` 创建的对象可能在栈上分配
+#### ➤ `new(obj)` 创建的对象可能在栈上分配
 
 In order to allocate the data the pointer points to on the stack, several conditions must be true.
 
@@ -476,13 +476,13 @@ func count指针所指对象在栈上分配() *int {
 }
 ```
 
-➤ `new(obj)` 也可能在堆上分配
+#### ➤ `new(obj)` 也可能在堆上分配
 
 A common source of bugs in C programs is returning a pointer to a local variable. In C, this results in a pointer pointing to invalid memory. The Go compiler is smarter. When it sees that a pointer to a local variable is returned, the local variable’s value is stored on the heap.
 
 When the compiler determines that the data can’t be stored on the stack, we say that the data the pointer points to *escapes the stack* and the compiler stores the data on the heap. The heap is the memory that’s managed by the garbage collector (or by hand in languages like C and C++).   
 
-➤ 其他细节
+#### ➤ 其他细节
 
 Any data that’s stored on the heap is valid as long as it can be tracked back to a pointer type variable on a stack. Once there are no more pointers pointing to that data (or to data that points to that data), the data becomes garbage and it’s the job of the garbage collector to clear it out.
 

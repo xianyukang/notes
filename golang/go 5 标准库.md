@@ -99,7 +99,7 @@ Because `io.Reader` and `io.Writer` are such simple interfaces, they can be impl
 
 ![image-20220628014225941](https://static.xianyukang.com/img/image-20220628014225941.png) 
 
-➤ 装饰器模式指 decorator 拦截了函数调用、不改变对外接口、也不改变函数本身,  但多了一层逻辑.
+#### ➤ 装饰器模式指 decorator 拦截了函数调用、不改变对外接口、也不改变函数本身,  但多了一层逻辑.
 
 Implementations of `io.Reader` and `io.Writer` are often chained together in a decorator pattern. Because countLetters depends on an `io.Reader`, we can use the exact same `countLetters` function to count English letters in a gzip-compressed file. First we write a function that, when given a filename, returns a `*gzip.Reader`:  
 
@@ -122,15 +122,15 @@ The `io.Seeker` interface is used for random access to a resource. The `io.Close
 
 ![image-20220629030746327](https://static.xianyukang.com/img/image-20220629030746327.png) 
 
-➤ 不要在循环里用 defer、推荐手动关闭、因为 defer 与块作用域无关、只在函数结束后运行
+#### ➤ 不要在循环里用 defer、推荐手动关闭、因为 defer 与块作用域无关、只在函数结束后运行
 
 *If you are opening the resource in a loop, do not use defer*, as it will not run until the function exits. Instead, you should call Close before the end of the loop iteration. If there are errors that can lead to an exit, you must call `Close` there, too.  
 
-➤ 推荐用 io.ReadCloser 这样的整合接口而不是用 os.File 作为参数,  因为前者更通用、并且意图更清晰
+#### ➤ 推荐用 io.ReadCloser 这样的整合接口而不是用 os.File 作为参数,  因为前者更通用、并且意图更清晰
 
 The io package defines interfaces that combine these four interfaces in various ways. They include io.ReadCloser, io.ReadSeeker, io.ReadWriteCloser, io.ReadWrite Seeker, io.ReadWriter, io.WriteCloser, and io.WriteSeeker. Use these interfaces to specify what your functions expect to do with the data. For example, rather than just using an `os.File` as a parameter, use the interfaces to specify exactly what your function will do with the parameter. Not only does it make your functions more general purpose, it also makes your intent clearer.
 
-➤ 小文件可以用 ioutil、大文件应该用 bufio
+#### ➤ 小文件可以用 ioutil、大文件应该用 bufio
 
 The `ioutil` package provides some simple utilities for things like reading entire `io.Reader` implementations into byte slices at once, reading and writing files, and  working with temporary files. The `ioutil.ReadAll`, `ioutil.ReadFile`, and `ioutil.WriteFile` functions are fine for small data sources, *but it’s better to use the Reader, Writer, and Scanner in the bufio package to work with larger data sources*.
 
@@ -168,11 +168,11 @@ The `time.Parse` function converts from a string to a time.Time, while the `Form
 
 ![image-20220630034152962](https://static.xianyukang.com/img/image-20220630034152962.png) 
 
-➤ 提取时间分量、比较时间
+#### ➤ 提取时间分量、比较时间
 
 Just as there are methods on time.Duration to extract portions of it, there are methods defined on time.Time to do the same, including Day, Month, Year, Hour, Minute, Second, Weekday, `Clock` (which returns the time portion of a time.Time as separate hour, minute, and second int values), and `Date` (which returns the year, month, and day as separate int values). You can compare one time.Time instance against another with the `After`, `Before`, and `Equal` methods.  
 
-➤ 时间的加减计算
+#### ➤ 时间的加减计算
 
 The `Sub` method returns a `time.Duration` that represents the elapsed time between two `time.Time` instances, while the `Add` method returns a `time.Time` that is `time.Duration` later, and the `AddDate` method returns a new `time.Time` instance that’s incremented by the specified number of years, months, and days. As with time.Duration, there are `Truncate` and `Round` methods defined as well. All of these methods are defined on a value receiver, so they do not modify the time.Time instance.  
 
@@ -196,13 +196,13 @@ Go’s standard library includes support for converting Go data types to and fro
 
 We specify the rules for processing our JSON with struct tags, strings that are written after the fields in a struct. Even though struct tags are strings marked with backticks, they cannot extend past a single line. Struct tags are composed of one or more tag-value pairs, written as `tagName:"tagValue"` and separated by spaces. Also, note that all of these fields are exported. Like any other package, the code in the `encoding/json` package cannot access an unexported field on a struct in another package.  
 
-➤ 推荐用 json 标签显式指定字段名
+#### ➤ 推荐用 json 标签显式指定字段名
 
 For JSON processing, we use the tag name `json` to specify the name of the JSON field that should be associated with the struct field. If no json tag is provided, the default behavior is to assume that the name of the JSON object field matches the name of the Go struct field. Despite this default behavior, it’s best to use the struct tag to specify the name of the field explicitly, even if the field names are identical.  
 
 When unmarshaling from JSON into a struct field with no json tag, the name match is case-insensitive. When marshaling a struct field with no json tag back to JSON , the JSON field will always have an uppercase first letter, because the field is exported.
 
-➤ 如何忽略某字段、以及 empty 的定义
+#### ➤ 如何忽略某字段、以及 empty 的定义
 
 If a field should be ignored when marshaling or unmarshaling, use a dash `-` for the name. If the field should be left out of the output when it is empty, add `,omitempty` after the name. Unfortunately, the definition of “empty” doesn’t exactly align with the zero value, as you might expect. The zero value of a struct doesn’t count as empty, but a zero-length slice or map does.
 
@@ -248,7 +248,7 @@ While the default functionality is often sufficient, there are times you need to
 
 We embedded a time.Time instance into a new struct called `RFC822ZTime` so that we still have access to the other methods on `time.Time`. As we discussed in “Pointer Receivers and Value Receivers” on page 131, the method that reads the time value is declared on a value receiver, *while the method that modifies the time value is declared on a pointer receiver*.
 
-➤ 分离序列化逻辑与业务逻辑
+#### ➤ 分离序列化逻辑与业务逻辑
 
 为了让自定义的时间格式生效, Order 结构体中需要用 RFC822ZTime 类型,  
 导致格式化逻辑影响了数据的存储结构, 所以这种方式有一点耦合 (Order 中用 time.Time 存储时间更合适). 
@@ -259,7 +259,7 @@ While JSON is probably the most commonly used encoder in the standard library, G
 
 ### json.RawMessage 有什么用
 
-➤ 若 status 字段可能为 string 或 number,  可以用 json.RawMessage 延迟解析
+#### ➤ 若 status 字段可能为 string 或 number,  可以用 json.RawMessage 延迟解析
 
 ```go
 func main() {
@@ -347,7 +347,7 @@ A server that only handles a single request isn’t terribly useful, so the Go s
 
 ### os/exec
 
-[➤ 官方文档](https://pkg.go.dev/os/exec)
+[#### ➤ 官方文档](https://pkg.go.dev/os/exec)
 
 Package exec runs external commands. It wraps os.StartProcess to make it easier to remap stdin and stdout, connect I/O with pipes, and do other adjustments.
 
@@ -357,13 +357,13 @@ Unlike the "system" library call from C and other languages, <font color='#D05'>
 
 ### 例子
 
-➤ [参考例子](https://go.dev/doc/effective_go#:~:text=bytes.Buffer.-,Interfaces%20and%20other%20types,-Interfaces)
+#### ➤ [参考例子](https://go.dev/doc/effective_go#:~:text=bytes.Buffer.-,Interfaces%20and%20other%20types,-Interfaces)
 
 1. 想让自定义类型支持排序,  可以实现 `sort.Interface`
 2. `sort.Sort` 和 `sort.Stable` 分别是不稳定排序、和稳定排序
 3. 如果实现 `Less` 方法时需要比较两个浮点数,  要考虑 `NaN`,  参考 `sort.Float64Slice` 的 `Less` 实现
 
-➤ 有现成函数对 `[]int`、`[]string`、`[]float64` 排序
+#### ➤ 有现成函数对 `[]int`、`[]string`、`[]float64` 排序
 
 ```go
 type Sequence []int
@@ -391,7 +391,7 @@ func (s Sequence) String() string {
 }
 ```
 
-➤ The other way is to use `sort.Slice` with a custom `Less` function.
+#### ➤ The other way is to use `sort.Slice` with a custom `Less` function.
 
 ```go
 sort.Slice(people, func(i, j int) bool {
@@ -399,7 +399,7 @@ sort.Slice(people, func(i, j int) bool {
 })
 ```
 
-➤ 若需要支持多种排序方式, [参考 sort 包的三个例子](https://pkg.go.dev/sort#example-package-SortKeys)
+#### ➤ 若需要支持多种排序方式, [参考 sort 包的三个例子](https://pkg.go.dev/sort#example-package-SortKeys)
 
 ```go
 // Sort the planets by the various criteria.

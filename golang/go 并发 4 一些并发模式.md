@@ -39,7 +39,7 @@ Since the immutable objects cannot be modified after being created, then it’s 
 
 ### Confinement
 
-➤ 如果不共享数据、那么就不需要同步数据,  比如让每个协程有自己独享的一份 data
+#### ➤ 如果不共享数据、那么就不需要同步数据,  比如让每个协程有自己独享的一份 data
 
 We know that accessing mutable, shared data between threads requires some level of synchronization, but one way to avoid doing this is to simply not share. Confinement is the simple yet powerful idea of *ensuring information is only ever available from one concurrent process*. When this is achieved, a concurrent program is implicitly safe and no synchronization is needed.
 
@@ -109,7 +109,7 @@ func or_channel_pattern() {
 
 ## Error Handling
 
-➤ 生成 worker 的协程负责错误处理,   因为它比 worker 掌握更多的信息
+#### ➤ 生成 worker 的协程负责错误处理,   因为它比 worker 掌握更多的信息
 
 The most fundamental question when thinking about error handling is, “Who should be responsible for handling the error?” With concurrent processes, this question becomes a little more complex.
 
@@ -160,7 +160,7 @@ func error_handling() {
 }
 ```
 
-➤ 推荐把错误也打包返回, 而不是在 worker 中做错误处理
+#### ➤ 推荐把错误也打包返回, 而不是在 worker 中做错误处理
 
 Errors should be considered first-class citizens when constructing values to return from goroutines. If your goroutine can produce errors, *those errors should be tightly coupled with your result type*, and passed along through the same lines of communication—just like regular synchronous functions.  
 
