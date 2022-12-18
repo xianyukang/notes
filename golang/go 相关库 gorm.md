@@ -118,7 +118,7 @@ type Product struct {
 
 ### 日志配置
 
-[#### ➤ 参考文档](https://gorm.io/docs/logger.html)
+#### [➤ 参考文档](https://gorm.io/docs/logger.html)
 
 1. Gorm will print Slow SQL and happening errors by default.
 2. 可以修改日志的输出目标、输出格式、如果把日志级别调成 info 能方便看 SQL 日志
@@ -127,7 +127,7 @@ type Product struct {
 
 ### GORM 配置
 
-[#### ➤ 参考文档](https://gorm.io/zh_CN/docs/gorm_config.html)
+#### [➤ 参考文档](https://gorm.io/zh_CN/docs/gorm_config.html)
 
 1. 修改创建表时的命名策略,  比如表名用什么前缀 (默认无)、使用单数还是复数 (默认复数, 推荐改成单数)
 
@@ -225,7 +225,7 @@ func 创建表() {
 
 ### 一些 gorm tag
 
-[#### ➤ 参考文档](https://gorm.io/docs/models.html#Fields-Tags)
+#### [➤ 参考文档](https://gorm.io/docs/models.html#Fields-Tags)
 
 ```go
 type GormTag struct {

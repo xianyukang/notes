@@ -121,9 +121,9 @@ func 使用中间件() {
 }
 ```
 
-[#### ➤ 如何编写自定义中间件、以及 c.Set() 的作用](https://github.com/gin-gonic/gin#custom-middleware)
+#### [➤ 如何编写自定义中间件、以及 c.Set() 的作用](https://github.com/gin-gonic/gin#custom-middleware)
 
-[#### ➤ 自定义 Panic Recovery 中间件](https://github.com/gin-gonic/gin#custom-recovery-behavior)
+#### [➤ 自定义 Panic Recovery 中间件](https://github.com/gin-gonic/gin#custom-recovery-behavior)
 
 #### ➤ 注意在 Middleware/Handler 中启动新的 Goroutine 时,  必须 c.Copy() 复制一下 Context, [例子](https://github.com/gin-gonic/gin#goroutines-inside-a-middleware)
 
@@ -203,9 +203,9 @@ func main() {
 返回文件: [①serving static files](https://github.com/gin-gonic/gin#serving-static-files)、[②serving data from file](https://github.com/gin-gonic/gin#serving-data-from-file)  
 [返回 Reader 中的数据](https://github.com/gin-gonic/gin#serving-data-from-reader),  比如用 http.Get 请求某个网址得到一个 Reader,  然后返回 Reader 中的数据
 
-[#### ➤ 渲染 HTML 模板](https://github.com/gin-gonic/gin#html-rendering)  
-[#### ➤ 返回重定向](https://github.com/gin-gonic/gin#redirects)  
-[#### ➤ 读写 Cookie](https://github.com/gin-gonic/gin#set-and-get-a-cookie)
+#### [➤ 渲染 HTML 模板](https://github.com/gin-gonic/gin#html-rendering)  
+#### [➤ 返回重定向](https://github.com/gin-gonic/gin#redirects)  
+#### [➤ 读写 Cookie](https://github.com/gin-gonic/gin#set-and-get-a-cookie)
 
 ### 配置 HTTP Server
 

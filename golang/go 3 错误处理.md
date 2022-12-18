@@ -124,7 +124,7 @@ There are few options for declaring errors. Consider the following before pickin
 
 ## Wrapping Errors
 
-[#### ➤ 参考文档](https://go.dev/blog/go1.13-errors)
+#### [➤ 参考文档](https://go.dev/blog/go1.13-errors)
 
 ### Why Wrapping Errors
 

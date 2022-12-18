@@ -263,7 +263,7 @@ func div(a int, b int) (result int, err error) {
 }
 ```
 
- [#### ➤ 为什么 defer 配合 named return vlaue 能修改函数返回值?](https://stackoverflow.com/questions/37248898/how-does-defer-and-named-return-value-work)
+ #### [➤ 为什么 defer 配合 named return vlaue 能修改函数返回值?](https://stackoverflow.com/questions/37248898/how-does-defer-and-named-return-value-work)
 
 一些注意点:
 

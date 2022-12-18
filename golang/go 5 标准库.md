@@ -347,7 +347,7 @@ A server that only handles a single request isn’t terribly useful, so the Go s
 
 ### os/exec
 
-[#### ➤ 官方文档](https://pkg.go.dev/os/exec)
+#### [➤ 官方文档](https://pkg.go.dev/os/exec)
 
 Package exec runs external commands. It wraps os.StartProcess to make it easier to remap stdin and stdout, connect I/O with pipes, and do other adjustments.
 
