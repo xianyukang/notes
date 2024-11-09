@@ -533,7 +533,7 @@ To avoid unexpected aliasing and similar bugs, be careful when copying a struct.
 
 ```go
 // Bad:
-var b1 bytes.Buffera
+var b1 bytes.Buffer
 b2 := b1
 ```
 
