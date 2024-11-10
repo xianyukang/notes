@@ -45,6 +45,7 @@
     - [区分零值和不提供值](#%E5%8C%BA%E5%88%86%E9%9B%B6%E5%80%BC%E5%92%8C%E4%B8%8D%E6%8F%90%E4%BE%9B%E5%80%BC)
     - [别返回 nil 表示数据不存在](#%E5%88%AB%E8%BF%94%E5%9B%9E-nil-%E8%A1%A8%E7%A4%BA%E6%95%B0%E6%8D%AE%E4%B8%8D%E5%AD%98%E5%9C%A8)
     - [栈上分配 vs 堆上分配](#%E6%A0%88%E4%B8%8A%E5%88%86%E9%85%8D-vs-%E5%A0%86%E4%B8%8A%E5%88%86%E9%85%8D)
+    - [逃逸分析](#%E9%80%83%E9%80%B8%E5%88%86%E6%9E%90)
 
 ## 数值类型
 
@@ -865,3 +866,84 @@ What’s so bad about storing things on the heap? There are two problems related
 
 1. First is that the garbage collector takes time to do its work. It isn’t trivial to keep track of all of the available chunks of free memory on the heap or tracking which used blocks of memory still have valid pointers. This is time that’s taken away from doing the processing that your program is written to do.  
 2. The second problem deals with the nature of computer hardware. RAM might mean “random access memory,” but the fastest way to read from memory is to read it sequentially. A slice of structs in Go has all of the data laid out sequentially in memory. This makes it fast to load and fast to process. A slice of pointers to structs (or structs whose fields are pointers) has its data scattered across RAM, making it far slower to read and process.  
+
+### 逃逸分析
+
+#### ➤ 概述
+
+1. 什么是逃逸分析? 就是编译器判断「 对象应该在栈上分配，还是堆上分配 」
+2. 为什么要介意对象在哪分配? 因为栈上分配效率高性能好，而过度的堆上分配会降低性能，增加垃圾回收器负担
+
+#### ➤ 查看对象是否发生逃逸
+
+```bash
+# -m    print optimization decisions
+# -l    disable inlining
+# -m=2  打印更详细的信息
+go build -gcflags '-m -l' main.go
+go build -gcflags '-m=2 -l' main.go
+
+# 会看到如下两行信息，都是指对象在堆上分配
+new(int) escapes to heap
+moved to heap: i
+```
+
+#### ➤ 局部变量的指针逃逸
+
+函数返回后，局部变量就全都清理掉了，所以指向局部变量的指针也会失效  
+只有把这些对象改成堆上分配，才能让函数返回的指针有意义
+
+```go
+var global *int
+
+func main() {
+    returnLocalPointer()
+    storePointerInGlobal()
+}
+
+// (1) 返回局部变量的指针
+func returnLocalPointer() *int {
+    var i int
+    return &i
+}
+
+// (2) 把局部变量的指针赋值给全局变量
+func storePointerInGlobal() {
+    var o int
+    global = &o
+}
+```
+
+#### ➤ 闭包
+
+```go
+// 返回了闭包, 然后闭包捕获了局部变量 i, 所以 i 会逃逸
+func returnClosure() func() {
+    var i int
+    return func() {
+        i++
+    }
+}
+```
+
+#### ➤ 堆对象引用栈对象
+
+```go
+var data struct {
+    Interface any
+    Pointer   *int
+    Value     int
+}
+
+// 堆对象引用栈对象时会发生逃逸
+func main() {
+    var num1 int
+    var num2 int
+    var num3 = new(int)
+    data.Interface = num1 // 堆对象通过接口引用栈对象, 所以逃逸
+    data.Pointer = &num2  // 堆对象通过指针引用栈对象, 所以逃逸
+    data.Value = *num3    // 使用值, 没有引用关系, 所以不逃逸
+}
+```
+
+#### ➤ 想了解 leak、escape、move 可以[参考这里](https://github.com/akutz/go-interface-values/tree/main/docs/03-escape-analysis)
